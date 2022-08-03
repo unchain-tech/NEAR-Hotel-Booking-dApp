@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::vec;
 
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use near_sdk::collections::LookupMap;
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{env, near_bindgen, AccountId, Promise};
@@ -88,15 +89,14 @@ pub struct ShowBookedInfo {
 #[derive(BorshSerialize, BorshDeserialize)]
 pub struct HotelBooking {
     hotels: HashMap<AccountId, HashMap<String, Room>>,
-    // guests: LookupMap<AccountId, HashMap<String, SaveBookedInfo>>, // [key]check_in_date
-    guests: HashMap<AccountId, HashMap<String, SaveBookedInfo>>, // [key]check_in_date
+    guests: LookupMap<AccountId, HashMap<String, SaveBookedInfo>>,
 }
 
 impl Default for HotelBooking {
     fn default() -> Self {
         Self {
             hotels: HashMap::new(),
-            guests: HashMap::new(),
+            guests: LookupMap::new(b"m"),
         }
     }
 }
@@ -393,25 +393,34 @@ impl HotelBooking {
             owner_id,
             room_name: room_name,
         };
-        match self.guests.get_mut(&guest_id) {
-            Some(booked_date) => {
+        match self.guests.get(&guest_id) {
+            Some(mut booked_date) => {
                 booked_date.insert(check_in_date.clone(), new_booked_date);
                 return;
             }
             None => {
                 let mut new_guest_date = HashMap::new();
                 new_guest_date.insert(check_in_date.clone(), new_booked_date);
-                self.guests.insert(guest_id, new_guest_date);
+                self.guests.insert(&guest_id, &new_guest_date);
             }
         }
     }
 
     fn delete_guest_booked_info(&mut self, guest_id: AccountId, check_in_data: String) {
-        // ここの処理がnear_sdkのcollectionだとできない気がする(getで値渡しされるので、データの更新ができない&get_mutに相当するメソッドがない）
-        let book_info = self.guests.get_mut(&guest_id).expect("ERR_NOT_FOUND_GUEST");
+        // ユーザー（宿泊者）が持っている予約情報のmapを取得
+        let mut book_info = self.guests.get(&guest_id).expect("ERR_NOT_FOUND_GUEST");
+
         book_info
             .remove(&check_in_data)
             .expect("ERR_NOT_FOUND_BOOKED");
+
+        // 予約情報が空になった場合、guestsコレクションからゲストを削除する。
+        if book_info.is_empty() {
+            self.guests.remove(&guest_id);
+        } else {
+            // 予約情報がまだある場合、更新した情報を挿入し直す。
+            self.guests.insert(&guest_id, &book_info);
+        }
     }
 }
 
