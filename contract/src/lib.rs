@@ -87,22 +87,22 @@ pub struct ShowBookedInfo {
 
 #[near_bindgen]
 #[derive(BorshSerialize, BorshDeserialize)]
-pub struct HotelBooking {
-    hotels: HashMap<AccountId, HashMap<String, Room>>,
-    booking_per_guest: LookupMap<AccountId, HashMap<String, SaveBookedInfo>>,
+pub struct Contract {
+    rooms_per_owner: HashMap<AccountId, HashMap<String, Room>>,
+    bookings_per_guest: LookupMap<AccountId, HashMap<String, SaveBookedInfo>>,
 }
 
-impl Default for HotelBooking {
+impl Default for Contract {
     fn default() -> Self {
         Self {
-            hotels: HashMap::new(),
-            booking_per_guest: LookupMap::new(b"m"),
+            rooms_per_owner: HashMap::new(),
+            bookings_per_guest: LookupMap::new(b"m"),
         }
     }
 }
 
 #[near_bindgen]
-impl HotelBooking {
+impl Contract {
     pub fn set_room(
         &mut self,
         name: String,
@@ -135,10 +135,10 @@ impl HotelBooking {
         };
 
         // get_mut: キーに対応する値へのミュータブルリファレンスを返す。
-        match self.hotels.get_mut(&owner_id) {
+        match self.rooms_per_owner.get_mut(&owner_id) {
             //既にホテルが登録されている時
-            Some(hotel) => {
-                let existing = hotel.insert(new_room.name.clone(), new_room);
+            Some(rooms) => {
+                let existing = rooms.insert(new_room.name.clone(), new_room);
                 if !(existing.is_none()) {
                     return false;
                 }
@@ -146,9 +146,9 @@ impl HotelBooking {
             }
             // まだホテル自体が未登録だった時
             None => {
-                let mut new_hotel_room = HashMap::new();
-                new_hotel_room.insert(new_room.name.clone(), new_room);
-                let _ = self.hotels.insert(owner_id.clone(), new_hotel_room);
+                let mut new_rooms = HashMap::new();
+                new_rooms.insert(new_room.name.clone(), new_room);
+                let _ = self.rooms_per_owner.insert(owner_id.clone(), new_rooms);
                 true
             }
         };
@@ -162,8 +162,11 @@ impl HotelBooking {
         guest_id: AccountId,
     ) {
         let owner_id = env::signer_account_id();
-        let hotel = self.hotels.get_mut(&owner_id).expect("ERR_NOT_FOUND_HOTEL");
-        let room = hotel.get_mut(&name).expect("ERR_NOT_FOUND_ROOM");
+        let rooms = self
+            .rooms_per_owner
+            .get_mut(&owner_id)
+            .expect("ERR_NOT_FOUND_HOTEL");
+        let room = rooms.get_mut(&name).expect("ERR_NOT_FOUND_ROOM");
 
         // ホテルが持つ予約情報の削除
         room.booked_info
@@ -178,15 +181,21 @@ impl HotelBooking {
 
     pub fn change_status_to_stay(&mut self, name: String, check_in_date: String) {
         let owner_id = env::signer_account_id();
-        let hotel = self.hotels.get_mut(&owner_id).expect("ERR_NOT_FOUND_HOTEL");
-        let room = hotel.get_mut(&name).expect("ERR_NOT_FOUND_ROOM");
+        let rooms = self
+            .rooms_per_owner
+            .get_mut(&owner_id)
+            .expect("ERR_NOT_FOUND_HOTEL");
+        let room = rooms.get_mut(&name).expect("ERR_NOT_FOUND_ROOM");
 
         room.status = UsageStatus::Stay { check_in_date };
     }
 
     pub fn is_available(&self, owner_id: AccountId, name: String) -> bool {
-        let hotel = self.hotels.get(&owner_id).expect("ERR_NOT_FOUND_HOTEL");
-        let room = hotel.get(&name).expect("ERR_NOT_FOUND_ROOM");
+        let rooms = self
+            .rooms_per_owner
+            .get(&owner_id)
+            .expect("ERR_NOT_FOUND_HOTEL");
+        let room = rooms.get(&name).expect("ERR_NOT_FOUND_ROOM");
         if room.status != UsageStatus::Available {
             return false;
         }
@@ -197,8 +206,8 @@ impl HotelBooking {
         // for 全ホテル
         let mut available_rooms = vec![];
 
-        for (owner_id, hotel) in self.hotels.iter() {
-            for (_, room) in hotel {
+        for (owner_id, rooms) in self.rooms_per_owner.iter() {
+            for (_, room) in rooms {
                 match room.booked_info.get(&check_in_date) {
                     Some(_) => continue,
                     None => {
@@ -226,9 +235,9 @@ impl HotelBooking {
 
     pub fn get_hotel_rooms(&self, owner_id: AccountId) -> Vec<ResigteredRoom> {
         let mut hotel_rooms = vec![];
-        match self.hotels.get(&owner_id) {
-            Some(hotel) => {
-                for (_, room) in hotel {
+        match self.rooms_per_owner.get(&owner_id) {
+            Some(rooms) => {
+                for (_, room) in rooms {
                     hotel_rooms.push(self.create_resigtered_room(room));
                 }
                 hotel_rooms
@@ -238,8 +247,11 @@ impl HotelBooking {
     }
 
     pub fn get_resigtered_room(&self, owner_id: AccountId, name: String) -> ResigteredRoom {
-        let hotel = self.hotels.get(&owner_id).expect("ERR_NOT_FOUND_HOTEL");
-        let room = hotel.get(&name).expect("ERR_NOT_FOUND_ROOM");
+        let rooms = self
+            .rooms_per_owner
+            .get(&owner_id)
+            .expect("ERR_NOT_FOUND_HOTEL");
+        let room = rooms.get(&name).expect("ERR_NOT_FOUND_ROOM");
         let resigtered_room = self.create_resigtered_room(&room);
 
         println!("\n\nROOM: {:?}\n\n", resigtered_room);
@@ -249,9 +261,9 @@ impl HotelBooking {
     pub fn get_booked_rooms(&self, owner_id: AccountId) -> Vec<BookedRoom> {
         let mut booked_rooms = vec![];
 
-        match self.hotels.get(&owner_id) {
-            Some(hotel) => {
-                for (_, room) in hotel {
+        match self.rooms_per_owner.get(&owner_id) {
+            Some(rooms) => {
+                for (_, room) in rooms {
                     if room.booked_info.len() == 0 {
                         continue;
                     }
@@ -290,11 +302,11 @@ impl HotelBooking {
     #[payable]
     pub fn book_room(&mut self, owner_id: AccountId, name: String, check_in_date: String) -> bool {
         // 予約する部屋を取得
-        let hotel = self
-            .hotels
+        let rooms = self
+            .rooms_per_owner
             .get_mut(&owner_id.clone())
             .expect("ERR_NOT_FOUND_HOTEL");
-        let room = hotel.get_mut(&name.clone()).expect("ERR_NOT_FOUND_ROOM");
+        let room = rooms.get_mut(&name.clone()).expect("ERR_NOT_FOUND_ROOM");
 
         let account_id = env::signer_account_id();
         let deposit = env::attached_deposit();
@@ -323,15 +335,15 @@ impl HotelBooking {
     pub fn get_guest_booked_info(&self, guest_id: AccountId) -> Vec<ShowBookedInfo> {
         // let guest_id = env::signer_account_id();
         let mut guest_info: Vec<ShowBookedInfo> = vec![];
-        match self.booking_per_guest.get(&guest_id) {
+        match self.bookings_per_guest.get(&guest_id) {
             Some(save_booked_info) => {
                 for (check_in_date, booked_info) in save_booked_info {
                     // get check in time
-                    let hotel = self
-                        .hotels
+                    let rooms = self
+                        .rooms_per_owner
                         .get(&booked_info.owner_id)
                         .expect("ERR_NOT_FOUND_HOTEL");
-                    let room = hotel
+                    let room = rooms
                         .get(&booked_info.room_name)
                         .expect("ERR_NOT_FOUND_ROOM");
                     let info = ShowBookedInfo {
@@ -349,8 +361,9 @@ impl HotelBooking {
     }
 }
 
-impl HotelBooking {
-    pub fn create_resigtered_room(&self, room: &Room) -> ResigteredRoom {
+// Private functions
+impl Contract {
+    fn create_resigtered_room(&self, room: &Room) -> ResigteredRoom {
         let use_time = UseTime {
             check_in: room.use_time.check_in.clone(),
             check_out: room.use_time.check_out.clone(),
@@ -393,7 +406,7 @@ impl HotelBooking {
             owner_id,
             room_name: room_name,
         };
-        match self.booking_per_guest.get(&guest_id) {
+        match self.bookings_per_guest.get(&guest_id) {
             Some(mut booked_date) => {
                 booked_date.insert(check_in_date.clone(), new_booked_date);
                 return;
@@ -401,7 +414,7 @@ impl HotelBooking {
             None => {
                 let mut new_guest_date = HashMap::new();
                 new_guest_date.insert(check_in_date.clone(), new_booked_date);
-                self.booking_per_guest.insert(&guest_id, &new_guest_date);
+                self.bookings_per_guest.insert(&guest_id, &new_guest_date);
             }
         }
     }
@@ -409,7 +422,7 @@ impl HotelBooking {
     fn remove_booking_from_guest(&mut self, guest_id: AccountId, check_in_data: String) {
         // ユーザー（宿泊者）が持っている予約情報のmapを取得
         let mut book_info = self
-            .booking_per_guest
+            .bookings_per_guest
             .get(&guest_id)
             .expect("ERR_NOT_FOUND_GUEST");
 
@@ -419,10 +432,10 @@ impl HotelBooking {
 
         // 予約情報が空になった場合、guestsコレクションからゲストを削除する。
         if book_info.is_empty() {
-            self.booking_per_guest.remove(&guest_id);
+            self.bookings_per_guest.remove(&guest_id);
         } else {
             // 予約情報がまだある場合、更新した情報を挿入し直す。
-            self.booking_per_guest.insert(&guest_id, &book_info);
+            self.bookings_per_guest.insert(&guest_id, &book_info);
         }
     }
 }
@@ -459,7 +472,7 @@ mod tests {
         // Set the testing environment for the subsequent calls
         testing_env!(context.predecessor_account_id(accounts(0)).build());
 
-        let mut contract = HotelBooking::default();
+        let mut contract = Contract::default();
         let is_success = contract.set_room(
             "JAPAN_room".to_string(),
             "test.img".to_string(),
@@ -484,7 +497,7 @@ mod tests {
         testing_env!(context.build());
         testing_env!(context.predecessor_account_id(accounts(0)).build());
 
-        let mut contract = HotelBooking::default();
+        let mut contract = Contract::default();
         let _ = contract.set_room(
             "JAPAN_room".to_string(),
             "test.img".to_string(),
@@ -517,7 +530,7 @@ mod tests {
         let mut context = get_context(true);
         testing_env!(context.build());
         testing_env!(context.predecessor_account_id(accounts(0)).build());
-        let contract = HotelBooking::default();
+        let contract = Contract::default();
 
         // ここで使用するaccountsの指定に注意。環境設定でsigner_account_idにaccounts(1)を指定しているので、それ以外（〜6)を指定すること。
         let error_owner_id = accounts(2);
@@ -539,7 +552,7 @@ mod tests {
 
         let hotel_owner_id = env::signer_account_id();
         let name = String::from("JAPAN_room");
-        let mut contract = HotelBooking::default();
+        let mut contract = Contract::default();
         let _ = contract.set_room(
             name.clone(),
             "test.img".to_string(),
@@ -614,7 +627,7 @@ mod tests {
         testing_env!(context.build());
         testing_env!(context.predecessor_account_id(accounts(0)).build());
 
-        let mut contract = HotelBooking::default();
+        let mut contract = Contract::default();
         let _ = contract.set_room(
             "JAPAN_room".to_string(),
             "test.img".to_string(),
