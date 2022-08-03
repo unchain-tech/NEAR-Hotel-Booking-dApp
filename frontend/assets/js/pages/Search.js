@@ -20,22 +20,12 @@ const Search = () => {
 
   //...
   const booking = async (room_id, price) => {
-    let is_success = book_room({
+    book_room({
       room_id,
       date,
       price,
     });
     getAvailableRooms();
-    // }).then((is_success) => {
-    //   // TODO: 以降の処理が実行されない
-    //   console.log("booking: ", is_success);
-    //   if (!is_success) {
-    //     alert('Error "Please try again."');
-    //   } else {
-    //     alert("Booked!" + "\nowner: " + owner_id + "\nroom name: " + name);
-    //   }
-    //   // getRooms();
-    // });
   };
 
   //...
@@ -65,7 +55,7 @@ const Search = () => {
       </div>
       <Row>
         {availableRooms.map((_room) => (
-          <Room room={{ ..._room }} key={_room.room_name} booking={booking} />
+          <Room room={{ ..._room }} key={_room.room_id} booking={booking} />
         ))}
       </Row>
     </>

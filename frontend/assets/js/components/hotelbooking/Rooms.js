@@ -36,21 +36,11 @@ const Rooms = () => {
 
   //...
   const booking = async (room_id, price) => {
-    let is_success = book_room({
+    book_room({
       room_id,
       date,
       price,
     });
-    // }).then((is_success) => {
-    //   // TODO: 以降の処理が実行されない
-    //   console.log("booking: ", is_success);
-    //   if (!is_success) {
-    //     alert('Error "Please try again."');
-    //   } else {
-    //     alert("Booked!" + "\nowner: " + owner_id + "\nroom name: " + name);
-    //   }
-    //   // getRooms();
-    // });
   };
 
   //...

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::vec;
 
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::{LookupMap, UnorderedSet};
+use near_sdk::collections::{LookupMap};
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{env, near_bindgen, AccountId, Promise};
@@ -276,7 +276,7 @@ impl Contract {
         return booking ResigteredRoom
     */
     #[payable]
-    pub fn book_room(&mut self, room_id: RoomId, check_in_date: String) -> bool {
+    pub fn book_room(&mut self, room_id: RoomId, check_in_date: String) {
         // 予約する部屋を取得
         let room = self
             .rooms_by_id
@@ -286,9 +286,7 @@ impl Contract {
         let account_id = env::signer_account_id();
         let deposit = env::attached_deposit();
         let room_price: u128 = room.price.clone().into();
-        if deposit != room_price {
-            return false;
-        }
+        assert_eq!(deposit, room_price, "ERR_DEPOSIT_IS_INCORRECT");
 
         // 予約が入った日付, guestを登録
         room.booked_info
@@ -300,7 +298,6 @@ impl Contract {
 
         // トークンを送信
         Promise::new(owner_id).transfer(deposit);
-        true
     }
 
     /**
@@ -543,9 +540,7 @@ mod tests {
         // println!("\n\nAVAILABLE_ROOM: {:?}\n\n", available_rooms);
         assert_eq!(available_rooms.len(), 1);
 
-        let is_success =
-            contract.book_room(available_rooms[0].room_id.clone(), check_in_date.clone());
-        assert_eq!(is_success, true);
+        contract.book_room(available_rooms[0].room_id.clone(), check_in_date.clone());
 
         let booked_rooms = contract.get_booked_rooms(hotel_owner_id.clone());
         println!("{:?}", booked_rooms);

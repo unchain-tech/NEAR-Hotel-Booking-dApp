@@ -140,8 +140,7 @@ export function add_room_to_owner(room) {
 }
 
 export async function book_room({ room_id, date, price }) {
-  console.log("book_room date: ", date);
-  let is_success = await window.contract.book_room(
+  await window.contract.book_room(
     {
       room_id: room_id,
       check_in_date: date,
@@ -149,7 +148,6 @@ export async function book_room({ room_id, date, price }) {
     GAS,
     price
   );
-  return is_success;
 }
 
 export async function change_status_to_available(
