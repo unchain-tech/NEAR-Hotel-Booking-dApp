@@ -19,10 +19,9 @@ const Search = () => {
   };
 
   //...
-  const booking = async (owner_id, name, price) => {
+  const booking = async (room_id, price) => {
     let is_success = book_room({
-      owner_id,
-      name,
+      room_id,
       date,
       price,
     });
@@ -66,11 +65,7 @@ const Search = () => {
       </div>
       <Row>
         {availableRooms.map((_room) => (
-          <Room
-            room={{ ..._room }}
-            key={_room.owner_id + _room.name}
-            booking={booking}
-          />
+          <Room room={{ ..._room }} key={_room.room_name} booking={booking} />
         ))}
       </Row>
     </>

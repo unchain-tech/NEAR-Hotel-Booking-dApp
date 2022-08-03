@@ -20,20 +20,8 @@ const ManageRooms = () => {
   };
 
   const addRoom = async (data) => {
-    await add_room_to_owner(data).then((is_success) => {
-      if (!is_success) {
-        console.log("addRoom: ", is_success);
-        alert(
-          'Error "Already exists."' +
-            "\n owner: " +
-            window.accountId +
-            "\n room : " +
-            data.name
-        );
-      }
-      getRooms();
-      console.log("SUCCESS_SET_ROOM");
-    });
+    add_room_to_owner(data);
+    getRooms();
   };
 
   useEffect(() => {

@@ -36,7 +36,7 @@ const GuestBookedList = () => {
           </tr>
         </thead>
         {bookedRooms.map((_room) => (
-          <tbody key={_room.name + _room.check_in_date}>
+          <tbody key={_room.room_id}>
             <tr>
               <td>{_room.owner_id}</td>
               <td>{_room.room_name}</td>

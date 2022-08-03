@@ -8,6 +8,7 @@ import Image from "react-bootstrap/Image";
 
 const Room = ({ room, booking }) => {
   const {
+    room_id,
     owner_id,
     name,
     image,
@@ -19,7 +20,7 @@ const Room = ({ room, booking }) => {
   } = room;
 
   const triggerBooking = () => {
-    booking(owner_id, name, price);
+    booking(room_id, price);
     console.log("Called booking in triggerBooking");
   };
 

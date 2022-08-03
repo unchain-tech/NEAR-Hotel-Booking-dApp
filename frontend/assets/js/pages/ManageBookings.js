@@ -18,25 +18,27 @@ const ManageBookings = () => {
     }
   };
 
-  const triggerCheckIn = async (name, check_in_date) => {
-    let isAvailable = await is_available(window.accountId, name);
+  const triggerCheckIn = async (room_id, check_in_date) => {
+    let isAvailable = await is_available(room_id);
     if (isAvailable == false) {
       alert('Error "Someone already stay."');
       return;
     }
     try {
-      change_status_to_stay(name, check_in_date).then((resp) => {
+      change_status_to_stay(room_id, check_in_date).then((resp) => {
         getBookedRooms();
       });
     } catch (error) {
       console.log({ error });
     }
   };
-  const triggerCheckOut = async (name, check_in_date, guest_id) => {
+  const triggerCheckOut = async (room_id, check_in_date, guest_id) => {
     try {
-      change_status_to_available(name, check_in_date, guest_id).then((resp) => {
-        getBookedRooms();
-      });
+      change_status_to_available(room_id, check_in_date, guest_id).then(
+        (resp) => {
+          getBookedRooms();
+        }
+      );
     } catch (error) {
       console.log({ error });
     }
@@ -66,7 +68,7 @@ const ManageBookings = () => {
           </tr>
         </thead>
         {bookedRooms.map((_room) => (
-          <tbody key={_room.name + _room.check_in_date}>
+          <tbody key={_room.room_id}>
             <tr>
               <td>{_room.name}</td>
               <td>{_room.check_in_date}</td>
@@ -77,7 +79,7 @@ const ManageBookings = () => {
                     variant='success'
                     size='sm'
                     onClick={(e) =>
-                      triggerCheckIn(_room.name, _room.check_in_date, e)
+                      triggerCheckIn(_room.room_id, _room.check_in_date, e)
                     }
                   >
                     Check In
@@ -89,7 +91,7 @@ const ManageBookings = () => {
                     size='sm'
                     onClick={(e) =>
                       triggerCheckOut(
-                        _room.name,
+                        _room.room_id,
                         _room.check_in_date,
                         _room.guest_id,
                         e
