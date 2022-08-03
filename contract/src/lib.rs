@@ -89,14 +89,14 @@ pub struct ShowBookedInfo {
 #[derive(BorshSerialize, BorshDeserialize)]
 pub struct HotelBooking {
     hotels: HashMap<AccountId, HashMap<String, Room>>,
-    guests: LookupMap<AccountId, HashMap<String, SaveBookedInfo>>,
+    booking_per_guest: LookupMap<AccountId, HashMap<String, SaveBookedInfo>>,
 }
 
 impl Default for HotelBooking {
     fn default() -> Self {
         Self {
             hotels: HashMap::new(),
-            guests: LookupMap::new(b"m"),
+            booking_per_guest: LookupMap::new(b"m"),
         }
     }
 }
@@ -173,7 +173,7 @@ impl HotelBooking {
         room.status = UsageStatus::Available;
 
         // ゲストが持つ予約情報を削除
-        self.delete_guest_booked_info(guest_id, check_in_date);
+        self.remove_booking_from_guest(guest_id, check_in_date);
     }
 
     pub fn change_status_to_stay(&mut self, name: String, check_in_date: String) {
@@ -323,7 +323,7 @@ impl HotelBooking {
     pub fn get_guest_booked_info(&self, guest_id: AccountId) -> Vec<ShowBookedInfo> {
         // let guest_id = env::signer_account_id();
         let mut guest_info: Vec<ShowBookedInfo> = vec![];
-        match self.guests.get(&guest_id) {
+        match self.booking_per_guest.get(&guest_id) {
             Some(save_booked_info) => {
                 for (check_in_date, booked_info) in save_booked_info {
                     // get check in time
@@ -393,7 +393,7 @@ impl HotelBooking {
             owner_id,
             room_name: room_name,
         };
-        match self.guests.get(&guest_id) {
+        match self.booking_per_guest.get(&guest_id) {
             Some(mut booked_date) => {
                 booked_date.insert(check_in_date.clone(), new_booked_date);
                 return;
@@ -401,14 +401,17 @@ impl HotelBooking {
             None => {
                 let mut new_guest_date = HashMap::new();
                 new_guest_date.insert(check_in_date.clone(), new_booked_date);
-                self.guests.insert(&guest_id, &new_guest_date);
+                self.booking_per_guest.insert(&guest_id, &new_guest_date);
             }
         }
     }
 
-    fn delete_guest_booked_info(&mut self, guest_id: AccountId, check_in_data: String) {
+    fn remove_booking_from_guest(&mut self, guest_id: AccountId, check_in_data: String) {
         // ユーザー（宿泊者）が持っている予約情報のmapを取得
-        let mut book_info = self.guests.get(&guest_id).expect("ERR_NOT_FOUND_GUEST");
+        let mut book_info = self
+            .booking_per_guest
+            .get(&guest_id)
+            .expect("ERR_NOT_FOUND_GUEST");
 
         book_info
             .remove(&check_in_data)
@@ -416,10 +419,10 @@ impl HotelBooking {
 
         // 予約情報が空になった場合、guestsコレクションからゲストを削除する。
         if book_info.is_empty() {
-            self.guests.remove(&guest_id);
+            self.booking_per_guest.remove(&guest_id);
         } else {
             // 予約情報がまだある場合、更新した情報を挿入し直す。
-            self.guests.insert(&guest_id, &book_info);
+            self.booking_per_guest.insert(&guest_id, &book_info);
         }
     }
 }
