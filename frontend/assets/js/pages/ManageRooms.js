@@ -5,7 +5,7 @@ import Col from "react-bootstrap/Col";
 
 import { utils } from "near-api-js";
 
-import { get_hotel_rooms, set_room } from "../near/utils";
+import { get_hotel_rooms, add_room_to_owner } from "../near/utils";
 import AddRoom from "../components/hotelbooking/AddRoom";
 
 const ManageRooms = () => {
@@ -20,7 +20,7 @@ const ManageRooms = () => {
   };
 
   const addRoom = async (data) => {
-    await set_room(data).then((is_success) => {
+    await add_room_to_owner(data).then((is_success) => {
       if (!is_success) {
         console.log("addRoom: ", is_success);
         alert(

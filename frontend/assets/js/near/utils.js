@@ -42,7 +42,7 @@ export async function initContract() {
         "is_available",
       ],
       changeMethods: [
-        "set_room",
+        "add_room_to_owner",
         "book_room",
         "change_status_to_available",
         "change_status_to_stay",
@@ -122,9 +122,9 @@ export async function is_available(owner_id, name) {
   return ret;
 }
 
-export function set_room(room) {
+export function add_room_to_owner(room) {
   room.price = parseNearAmount(room.price + "");
-  let is_success = window.contract.set_room({
+  let is_success = window.contract.add_room_to_owner({
     name: room.name,
     image: room.image,
     beds: Number(room.beds),
