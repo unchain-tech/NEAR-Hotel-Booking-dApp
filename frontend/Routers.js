@@ -15,7 +15,7 @@ const Routers = () => {
         <Route path='/search/:date' element={<Search />} />
         <Route path='/booked-list' element={<GuestBookedList />} />
         <Route path='/manage-rooms' element={<ManageRooms />} />
-        <Route path='/manage-booked' element={<ManageBookings />} />
+        <Route path='/manage-bookings' element={<ManageBookings />} />
       </Routes>
     </BrowserRouter>
   );
