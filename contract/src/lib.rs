@@ -103,7 +103,7 @@ impl Default for Contract {
 
 #[near_bindgen]
 impl Contract {
-    pub fn set_room(
+    pub fn add_room_to_owner(
         &mut self,
         name: String,
 
@@ -322,7 +322,7 @@ impl Contract {
         // guestsに保存
         // TODO: 既に予約が入っていないか事前に確認する
 
-        self.set_guest_booked_info(account_id, owner_id.clone(), name, check_in_date);
+        self.add_booking_to_guest(account_id, owner_id.clone(), name, check_in_date);
 
         // トークンを送信
         Promise::new(owner_id.clone()).transfer(deposit);
@@ -395,7 +395,7 @@ impl Contract {
         resigtered_room
     }
 
-    fn set_guest_booked_info(
+    fn add_booking_to_guest(
         &mut self,
         guest_id: AccountId,
         owner_id: AccountId,
@@ -464,7 +464,7 @@ mod tests {
     }
 
     #[test]
-    fn owner_set_then_get_room() {
+    fn owner_add_then_get_room() {
         let mut context = get_context(false);
         // Initialize the mocked blockchain
         testing_env!(context.build());
@@ -473,7 +473,7 @@ mod tests {
         testing_env!(context.predecessor_account_id(accounts(0)).build());
 
         let mut contract = Contract::default();
-        let is_success = contract.set_room(
+        let is_success = contract.add_room_to_owner(
             "JAPAN_room".to_string(),
             "test.img".to_string(),
             1,
@@ -492,13 +492,13 @@ mod tests {
     }
 
     #[test]
-    fn owner_set_then_get_rooms() {
+    fn owner_add_then_get_rooms() {
         let mut context = get_context(false);
         testing_env!(context.build());
         testing_env!(context.predecessor_account_id(accounts(0)).build());
 
         let mut contract = Contract::default();
-        let _ = contract.set_room(
+        let _ = contract.add_room_to_owner(
             "JAPAN_room".to_string(),
             "test.img".to_string(),
             1,
@@ -508,7 +508,7 @@ mod tests {
             "14:00".to_string(),
             "10:00".to_string(),
         );
-        let _ = contract.set_room(
+        let _ = contract.add_room_to_owner(
             "USA_room".to_string(),
             "test2.img".to_string(),
             2,
@@ -553,7 +553,7 @@ mod tests {
         let hotel_owner_id = env::signer_account_id();
         let name = String::from("JAPAN_room");
         let mut contract = Contract::default();
-        let _ = contract.set_room(
+        let _ = contract.add_room_to_owner(
             name.clone(),
             "test.img".to_string(),
             1,
@@ -563,7 +563,7 @@ mod tests {
             "14:00".to_string(),
             "10:00".to_string(),
         );
-        let _ = contract.set_room(
+        let _ = contract.add_room_to_owner(
             "USA_room".to_string(),
             "test2.img".to_string(),
             2,
@@ -622,13 +622,13 @@ mod tests {
     }
 
     #[test]
-    fn err_set_same_room() {
+    fn err_add_same_room() {
         let mut context = get_context(false);
         testing_env!(context.build());
         testing_env!(context.predecessor_account_id(accounts(0)).build());
 
         let mut contract = Contract::default();
-        let _ = contract.set_room(
+        let _ = contract.add_room_to_owner(
             "JAPAN_room".to_string(),
             "test.img".to_string(),
             1,
@@ -638,7 +638,7 @@ mod tests {
             "14:00".to_string(),
             "10:00".to_string(),
         );
-        let is_success = contract.set_room(
+        let is_success = contract.add_room_to_owner(
             "JAPAN_room".to_string(),
             "test.img".to_string(),
             2,
