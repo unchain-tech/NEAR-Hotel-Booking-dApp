@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::vec;
 
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use near_sdk::collections::LookupMap;
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{env, near_bindgen, AccountId, Promise};
@@ -68,16 +69,34 @@ pub struct Room {
     booked_info: HashMap<String, AccountId>, // checkin-date: guest_id
 }
 
+#[derive(Serialize, Deserialize, Debug, BorshSerialize, BorshDeserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct SaveBookedInfo {
+    owner_id: AccountId,
+    room_name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, BorshSerialize, BorshDeserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct ShowBookedInfo {
+    owner_id: AccountId,
+    room_name: String,
+    check_in_date: String,
+    check_in_time: String,
+}
+
 #[near_bindgen]
 #[derive(BorshSerialize, BorshDeserialize)]
 pub struct HotelBooking {
     hotels: HashMap<AccountId, HashMap<String, Room>>,
+    booking_per_guest: LookupMap<AccountId, HashMap<String, SaveBookedInfo>>,
 }
 
 impl Default for HotelBooking {
     fn default() -> Self {
         Self {
             hotels: HashMap::new(),
+            booking_per_guest: LookupMap::new(b"m"),
         }
     }
 }
@@ -136,16 +155,25 @@ impl HotelBooking {
         true
     }
 
-    pub fn change_status_to_available(&mut self, name: String, check_in_date: String) {
+    pub fn change_status_to_available(
+        &mut self,
+        name: String,
+        check_in_date: String,
+        guest_id: AccountId,
+    ) {
         let owner_id = env::signer_account_id();
         let hotel = self.hotels.get_mut(&owner_id).expect("ERR_NOT_FOUND_HOTEL");
         let room = hotel.get_mut(&name).expect("ERR_NOT_FOUND_ROOM");
 
+        // ホテルが持つ予約情報の削除
         room.booked_info
             .remove(&check_in_date)
             .expect("ERR_NOT_FOUND_DATE");
 
         room.status = UsageStatus::Available;
+
+        // ゲストが持つ予約情報を削除
+        self.remove_booking_from_guest(guest_id, check_in_date);
     }
 
     pub fn change_status_to_stay(&mut self, name: String, check_in_date: String) {
@@ -276,11 +304,48 @@ impl HotelBooking {
         }
 
         // 予約が入った日付, guestを登録
-        room.booked_info.insert(check_in_date, account_id);
+        room.booked_info
+            .insert(check_in_date.clone(), account_id.clone());
+
+        // guestsに保存
+        // TODO: 既に予約が入っていないか事前に確認する
+
+        self.set_guest_booked_info(account_id, owner_id.clone(), name, check_in_date);
 
         // トークンを送信
         Promise::new(owner_id.clone()).transfer(deposit);
         true
+    }
+
+    /**
+     * Guests
+     */
+    pub fn get_guest_booked_info(&self, guest_id: AccountId) -> Vec<ShowBookedInfo> {
+        // let guest_id = env::signer_account_id();
+        let mut guest_info: Vec<ShowBookedInfo> = vec![];
+        match self.booking_per_guest.get(&guest_id) {
+            Some(save_booked_info) => {
+                for (check_in_date, booked_info) in save_booked_info {
+                    // get check in time
+                    let hotel = self
+                        .hotels
+                        .get(&booked_info.owner_id)
+                        .expect("ERR_NOT_FOUND_HOTEL");
+                    let room = hotel
+                        .get(&booked_info.room_name)
+                        .expect("ERR_NOT_FOUND_ROOM");
+                    let info = ShowBookedInfo {
+                        owner_id: booked_info.owner_id.clone(),
+                        room_name: booked_info.room_name.clone(),
+                        check_in_date: check_in_date.clone(),
+                        check_in_time: room.use_time.check_in.clone(),
+                    };
+                    guest_info.push(info);
+                }
+                guest_info
+            }
+            None => guest_info,
+        }
     }
 }
 
@@ -315,6 +380,50 @@ impl HotelBooking {
             // booked_date: booked_date,
         };
         resigtered_room
+    }
+
+    fn set_guest_booked_info(
+        &mut self,
+        guest_id: AccountId,
+        owner_id: AccountId,
+        room_name: String,
+        check_in_date: String,
+    ) {
+        let new_booked_date = SaveBookedInfo {
+            owner_id,
+            room_name: room_name,
+        };
+        match self.booking_per_guest.get(&guest_id) {
+            Some(mut booked_date) => {
+                booked_date.insert(check_in_date.clone(), new_booked_date);
+                return;
+            }
+            None => {
+                let mut new_guest_date = HashMap::new();
+                new_guest_date.insert(check_in_date.clone(), new_booked_date);
+                self.booking_per_guest.insert(&guest_id, &new_guest_date);
+            }
+        }
+    }
+
+    fn remove_booking_from_guest(&mut self, guest_id: AccountId, check_in_data: String) {
+        // ユーザー（宿泊者）が持っている予約情報のmapを取得
+        let mut book_info = self
+            .booking_per_guest
+            .get(&guest_id)
+            .expect("ERR_NOT_FOUND_GUEST");
+
+        book_info
+            .remove(&check_in_data)
+            .expect("ERR_NOT_FOUND_BOOKED");
+
+        // 予約情報が空になった場合、guestsコレクションからゲストを削除する。
+        if book_info.is_empty() {
+            self.booking_per_guest.remove(&guest_id);
+        } else {
+            // 予約情報がまだある場合、更新した情報を挿入し直す。
+            self.booking_per_guest.insert(&guest_id, &book_info);
+        }
     }
 }
 
@@ -479,11 +588,24 @@ mod tests {
         );
         assert_eq!(booked_rooms[0].guest_id, accounts(2));
 
+        let guest_booked_info = contract.get_guest_booked_info(booked_rooms[0].guest_id.clone());
+        println!("\n\nGUEST INFO: {:?}", guest_booked_info);
+        assert_eq!(guest_booked_info.len(), 1);
+
         //TEST
         // ホテルのオーナーにアカウントを切り替え
         testing_env!(context.signer_account_id(accounts(1)).build());
         contract.change_status_to_stay(name.clone(), check_in_date.clone());
-        let rooms = contract.get_hotel_rooms(hotel_owner_id.clone());
+        contract.change_status_to_available(
+            name.clone(),
+            check_in_date.clone(),
+            booked_rooms[0].guest_id.clone(),
+        );
+
+        // ゲストの登録情報から消えたかチェック
+        let guest_booked_info = contract.get_guest_booked_info(booked_rooms[0].guest_id.clone());
+        println!("\n\nGUEST INFO: {:?}", guest_booked_info);
+        assert_eq!(guest_booked_info.len(), 0);
     }
 
     #[test]

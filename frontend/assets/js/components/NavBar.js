@@ -50,6 +50,9 @@ const NavBar = () => {
                   >
                     {window.accountId}
                   </NavDropdown.Item>
+                  <NavDropdown.Item onClick={() => navigate(`/booked-list`)}>
+                    Booking Information
+                  </NavDropdown.Item>
                   <NavDropdown.Divider />
                   <NavDropdown.Item
                     onClick={() => {
@@ -64,10 +67,12 @@ const NavBar = () => {
                   title='For hotel owners'
                   id='collasible-nav-dropdown'
                 >
-                  <NavDropdown.Item onClick={() => navigate(`/room-list`)}>
+                  <NavDropdown.Item onClick={() => navigate(`/manage-rooms`)}>
                     Room List
                   </NavDropdown.Item>
-                  <NavDropdown.Item onClick={() => navigate(`/booked-list`)}>
+                  <NavDropdown.Item
+                    onClick={() => navigate(`/manage-bookings`)}
+                  >
                     Booked List
                   </NavDropdown.Item>
                   <NavDropdown.Divider />

@@ -38,6 +38,7 @@ export async function initContract() {
         "get_hotel_rooms",
         "get_room",
         "get_booked_rooms",
+        "get_guest_booked_info",
         "is_available",
       ],
       changeMethods: [
@@ -106,6 +107,13 @@ export async function get_booked_rooms(owner_id) {
   return room;
 }
 
+export async function get_guest_booked_info(guest_id) {
+  let room = await window.contract.get_guest_booked_info({
+    guest_id: guest_id,
+  });
+  return room;
+}
+
 export async function is_available(owner_id, name) {
   let ret = await window.contract.is_available({
     owner_id: owner_id,
@@ -143,12 +151,17 @@ export async function book_room({ owner_id, name, date, price }) {
   return is_success;
 }
 
-export async function change_status_to_available(name, check_in_date) {
+export async function change_status_to_available(
+  name,
+  check_in_date,
+  guest_id
+) {
   console.log("in utils.js: ", name);
   console.log("in utils.js: ", check_in_date);
   await window.contract.change_status_to_available({
     name: name,
     check_in_date: check_in_date,
+    guest_id: guest_id,
   });
 }
 

@@ -2,8 +2,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import NavBar from "./assets/js/components/NavBar";
 import Home from "./assets/js/pages/Home";
 import Search from "./assets/js/pages/Search";
-import RoomList from "./assets/js/pages/RoomList";
-import BookedList from "./assets/js/pages/BookedList";
+import GuestBookedList from "./assets/js/pages/GuestBookedList";
+import ManageRooms from "./assets/js/pages/ManageRooms";
+import ManageBookings from "./assets/js/pages/ManageBookings";
 
 const Routers = () => {
   return (
@@ -12,8 +13,9 @@ const Routers = () => {
       <Routes>
         <Route path='/' element={<Home />} />
         <Route path='/search/:date' element={<Search />} />
-        <Route path='/room-list' element={<RoomList />} />
-        <Route path='/booked-list' element={<BookedList />} />
+        <Route path='/booked-list' element={<GuestBookedList />} />
+        <Route path='/manage-rooms' element={<ManageRooms />} />
+        <Route path='/manage-bookings' element={<ManageBookings />} />
       </Routes>
     </BrowserRouter>
   );

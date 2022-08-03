@@ -7,7 +7,7 @@ import {
   change_status_to_stay,
 } from "../near/utils";
 
-const BookedList = () => {
+const ManageBookings = () => {
   const [bookedRooms, setBookedRooms] = useState([]);
 
   const getBookedRooms = async () => {
@@ -32,9 +32,9 @@ const BookedList = () => {
       console.log({ error });
     }
   };
-  const triggerCheckOut = async (name, check_in_date) => {
+  const triggerCheckOut = async (name, check_in_date, guest_id) => {
     try {
-      change_status_to_available(name, check_in_date).then((resp) => {
+      change_status_to_available(name, check_in_date, guest_id).then((resp) => {
         getBookedRooms();
       });
     } catch (error) {
@@ -88,7 +88,12 @@ const BookedList = () => {
                     variant='danger'
                     size='sm'
                     onClick={(e) =>
-                      triggerCheckOut(_room.name, _room.check_in_date, e)
+                      triggerCheckOut(
+                        _room.name,
+                        _room.check_in_date,
+                        _room.guest_id,
+                        e
+                      )
                     }
                   >
                     Check Out
@@ -103,4 +108,4 @@ const BookedList = () => {
   );
 };
 
-export default BookedList;
+export default ManageBookings;

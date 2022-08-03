@@ -8,7 +8,7 @@ import { utils } from "near-api-js";
 import { get_hotel_rooms, set_room } from "../near/utils";
 import AddRoom from "../components/hotelbooking/AddRoom";
 
-const RoomList = () => {
+const ManageRooms = () => {
   const [rooms, setRooms] = useState([]);
 
   const getRooms = async () => {
@@ -115,4 +115,4 @@ const RoomList = () => {
   );
 };
 
-export default RoomList;
+export default ManageRooms;
