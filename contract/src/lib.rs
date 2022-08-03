@@ -106,7 +106,6 @@ impl Contract {
     pub fn add_room_to_owner(
         &mut self,
         name: String,
-
         image: String,
         beds: u8,
         description: String,
@@ -122,7 +121,6 @@ impl Contract {
         };
         let new_room = Room {
             name,
-
             image,
             beds,
             description,
@@ -130,7 +128,6 @@ impl Contract {
             price,
             use_time: use_time,
             status: UsageStatus::Available,
-            // owner_id: owner_id.clone(),
             booked_info: HashMap::new(),
         };
 
@@ -203,7 +200,6 @@ impl Contract {
     }
 
     pub fn get_available_rooms(&self, check_in_date: String) -> Vec<AvailableRoom> {
-        // for 全ホテル
         let mut available_rooms = vec![];
 
         for (owner_id, rooms) in self.rooms_per_owner.iter() {
@@ -244,18 +240,6 @@ impl Contract {
             }
             None => hotel_rooms,
         }
-    }
-
-    pub fn get_resigtered_room(&self, owner_id: AccountId, name: String) -> ResigteredRoom {
-        let rooms = self
-            .rooms_per_owner
-            .get(&owner_id)
-            .expect("ERR_NOT_FOUND_HOTEL");
-        let room = rooms.get(&name).expect("ERR_NOT_FOUND_ROOM");
-        let resigtered_room = self.create_resigtered_room(&room);
-
-        println!("\n\nROOM: {:?}\n\n", resigtered_room);
-        resigtered_room
     }
 
     pub fn get_booked_rooms(&self, owner_id: AccountId) -> Vec<BookedRoom> {
@@ -333,7 +317,6 @@ impl Contract {
      * Guests
      */
     pub fn get_guest_booked_info(&self, guest_id: AccountId) -> Vec<ShowBookedInfo> {
-        // let guest_id = env::signer_account_id();
         let mut guest_info: Vec<ShowBookedInfo> = vec![];
         match self.bookings_per_guest.get(&guest_id) {
             Some(save_booked_info) => {
@@ -389,8 +372,6 @@ impl Contract {
             price: room.price,
             use_time: use_time,
             status: status,
-            // owner_id: room.owner_id.clone(),
-            // booked_date: booked_date,
         };
         resigtered_room
     }
@@ -582,9 +563,6 @@ mod tests {
         let available_rooms = contract.get_available_rooms(check_in_date.clone());
         println!("\n\nAVAILABLE_ROOM: {:?}\n\n", available_rooms);
         assert_eq!(available_rooms.len(), 2);
-
-        // let available_room = contract.get_resigtered_room(hotel_owner_id.clone(), name.clone());
-        // assert_eq!(available_room.status, RoomStatus::Available);
 
         let is_success =
             contract.book_room(hotel_owner_id.clone(), name.clone(), check_in_date.clone());
