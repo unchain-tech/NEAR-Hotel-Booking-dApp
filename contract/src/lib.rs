@@ -229,7 +229,7 @@ impl Contract {
                     let room = self.rooms_by_id.get(&room_id).expect("ERR_NOT_FOUND_ROOM");
 
                     // UseStatusを複製
-                    // `String`はCopyトレイトを持つことができないため、複製する必要がある
+                    // `String`はCopyトレイトを持つことができないため、自分でコピーを作成する必要がある
                     let status: UsageStatus;
                     match room.status {
                         UsageStatus::Available => status = UsageStatus::Available,
@@ -399,168 +399,179 @@ mod tests {
     use near_sdk::test_utils::{accounts, VMContextBuilder};
     use near_sdk::testing_env;
 
+    // NEARをyoctoNEARに変換する
+    // 1 NEAR ->  10**24 yoctoNEAR
     fn near_to_yocto(near_amount: u128) -> U128 {
         U128(near_amount * 10u128.pow(24))
     }
 
-    // Allows for modifying the environment of the mocked blockchain
+    // トランザクションを実行するテスト環境を設定
     fn get_context(is_view: bool) -> VMContextBuilder {
         let mut builder = VMContextBuilder::new();
         builder
-            .account_balance(0)
-            .attached_deposit(0)
             .current_account_id(accounts(0))
             .predecessor_account_id(accounts(0))
             .signer_account_id(accounts(1))
+            // 使用するメソッドをbooleanで指定(viewメソッドはtrue, changeメソッドはfalse)
             .is_view(is_view);
         builder
     }
 
     #[test]
-    fn owner_add_then_get_room() {
-        let mut context = get_context(false);
-        // Initialize the mocked blockchain
+    fn add_then_get_registered_rooms() {
+        let context = get_context(false);
         testing_env!(context.build());
-
-        // Set the testing environment for the subsequent calls
-        testing_env!(context.predecessor_account_id(accounts(0)).build());
 
         let mut contract = Contract::default();
         contract.add_room_to_owner(
-            "JAPAN_room".to_string(),
+            "101".to_string(),
             "test.img".to_string(),
             1,
-            "This is JAPAN room".to_string(),
-            "Japan".to_string(),
+            "This is 101 room".to_string(),
+            "Tokyo".to_string(),
+            near_to_yocto(10),
+        );
+        contract.add_room_to_owner(
+            "201".to_string(),
+            "test.img".to_string(),
+            1,
+            "This is 201 room".to_string(),
+            "Tokyo".to_string(),
             near_to_yocto(10),
         );
 
+        // add_room_to_owner関数をコールしたアカウントIDを取得
         let owner_id = env::signer_account_id();
+
         let all_rooms = contract.get_rooms_registered_by_owner(owner_id);
-        // println!("\nALL_ROOMS: {:?}\n", all_rooms);
-        assert_eq!(all_rooms.len(), 1);
+        assert_eq!(all_rooms.len(), 2);
     }
 
     #[test]
-    fn owner_add_then_get_rooms() {
-        let mut context = get_context(false);
+    fn no_registered_room() {
+        let context = get_context(true);
         testing_env!(context.build());
-        testing_env!(context.predecessor_account_id(accounts(0)).build());
-
-        let mut contract = Contract::default();
-        contract.add_room_to_owner(
-            "JAPAN_room".to_string(),
-            "test.img".to_string(),
-            1,
-            "This is JAPAN room".to_string(),
-            "Japan".to_string(),
-            near_to_yocto(10),
-        );
-        contract.add_room_to_owner(
-            "USA_room".to_string(),
-            "test2.img".to_string(),
-            2,
-            "This is USA room".to_string(),
-            "USA".to_string(),
-            near_to_yocto(10),
-        );
-
-        let owner_id = env::signer_account_id();
-        let rooms = contract.get_rooms_registered_by_owner(owner_id);
-        // println!("\nHOTEL_ROOMS: {:?}\n", rooms);
-        assert_eq!(rooms.len(), 2);
-    }
-
-    #[test]
-    fn owner_empty_get_rooms() {
-        let mut context = get_context(true);
-        testing_env!(context.build());
-        testing_env!(context.predecessor_account_id(accounts(0)).build());
         let contract = Contract::default();
 
-        // ここで使用するaccountsの指定に注意。環境設定でsigner_account_idにaccounts(1)を指定しているので、それ以外（〜6)を指定すること。
-        let error_owner_id = accounts(2);
-        let error_rooms = contract.get_rooms_registered_by_owner(error_owner_id);
-        assert_eq!(error_rooms.len(), 0);
+        let no_registered_room = contract.get_rooms_registered_by_owner(accounts(0));
+        assert_eq!(no_registered_room.len(), 0);
     }
 
     #[test]
-    fn no_available_room() {
-        let mut context = get_context(true);
+    fn add_then_get_available_rooms() {
+        let mut context = get_context(false);
         testing_env!(context.build());
-        testing_env!(context.predecessor_account_id(accounts(0)).build());
+
+        let mut contract = Contract::default();
+        contract.add_room_to_owner(
+            "101".to_string(),
+            "test.img".to_string(),
+            1,
+            "This is 101 room".to_string(),
+            "Tokyo".to_string(),
+            near_to_yocto(10),
+        );
+        contract.add_room_to_owner(
+            "201".to_string(),
+            "test.img".to_string(),
+            1,
+            "This is 201 room".to_string(),
+            "Tokyo".to_string(),
+            near_to_yocto(10),
+        );
+
+        // `get_available_rooms`をコールするアカウントを設定
+        testing_env!(context.signer_account_id(accounts(2)).build());
+        let available_rooms = contract.get_available_rooms("2222-01-01".to_string());
+        assert_eq!(available_rooms.len(), 2);
+    }
+    #[test]
+    fn no_available_room() {
+        let context = get_context(true);
+        testing_env!(context.build());
         let contract = Contract::default();
 
         let available_rooms = contract.get_available_rooms("2222-01-01".to_string());
-        // println!("\n\nAVAILABLE_ROOM: {:?}\n\n", available_rooms);
         assert_eq!(available_rooms.len(), 0);
     }
 
+    // Room Owner   : bob(accounts(1))
+    // Booking Guest: charlie(accounts(2))
     #[test]
-    // hotel owner: bob(accounts(1))
-    // booking guest: charlie(accounts(2))
-    fn book_room_then_get_booked_list() {
+    fn book_room_then_change_status() {
         let mut context = get_context(false);
 
-        context.account_balance(near_to_yocto(2).into());
-        context.attached_deposit(near_to_yocto(1).into());
+        // 宿泊料を支払うため、NEARを設定
+        context.account_balance(near_to_yocto(20).into());
+        context.attached_deposit(near_to_yocto(10).into());
 
         testing_env!(context.build());
-        testing_env!(context.predecessor_account_id(accounts(0)).build());
 
-        let hotel_owner_id = env::signer_account_id();
-        let name = String::from("JAPAN_room");
+        let owner_id = env::signer_account_id();
         let mut contract = Contract::default();
         contract.add_room_to_owner(
-            name.clone(),
+            "101".to_string(),
             "test.img".to_string(),
             1,
-            "This is JAPAN room".to_string(),
-            "Japan".to_string(),
-            near_to_yocto(1),
+            "This is 101 room".to_string(),
+            "Tokyo".to_string(),
+            near_to_yocto(10),
         );
-        let rooms = contract.get_rooms_registered_by_owner(hotel_owner_id.clone());
-        assert_eq!(rooms.len(), 1);
 
-        // Search check
+        ///////////////////
+        // CHECK BOOKING //
+        ///////////////////
+        // `get_available_rooms`と`book_room`をコールするアカウントを設定
         testing_env!(context.signer_account_id(accounts(2)).build());
+
         let check_in_date: String = "2222-01-01".to_string();
         let available_rooms = contract.get_available_rooms(check_in_date.clone());
-        // println!("\n\nAVAILABLE_ROOM: {:?}\n\n", available_rooms);
-        assert_eq!(available_rooms.len(), 1);
 
+        // 予約を実行
         contract.book_room(available_rooms[0].room_id.clone(), check_in_date.clone());
 
-        let booked_rooms = contract.get_booking_info_for_owner(hotel_owner_id.clone());
-        println!("{:?}", booked_rooms);
+        // オーナー用の予約データの中身を確認
+        let booked_rooms = contract.get_booking_info_for_owner(owner_id.clone());
         assert_eq!(booked_rooms.len(), 1);
         assert_eq!(booked_rooms[0].check_in_date, check_in_date);
-        println!(
-            "guest{:?} signer{:?}",
-            booked_rooms[0].guest_id,
-            env::signer_account_id()
-        );
         assert_eq!(booked_rooms[0].guest_id, accounts(2));
 
-        let guest_booked_info =
-            contract.get_booking_info_for_guest(booked_rooms[0].guest_id.clone());
-        println!("\n\nGUEST INFO: {:?}", guest_booked_info);
-        assert_eq!(guest_booked_info.len(), 1);
+        // 宿泊者用の予約データの中身を確認
+        let guest_booked_rooms = contract.get_booking_info_for_guest(accounts(2));
+        assert_eq!(guest_booked_rooms.len(), 1);
+        assert_eq!(guest_booked_rooms[0].owner_id, owner_id);
 
-        // //TEST
-        // // ホテルのオーナーにアカウントを切り替え
+        /////////////////////////
+        // CHECK CHANGE STATUS //
+        /////////////////////////
+        // 'change_status_to_stay'をコールするアカウントを部屋のオーナーに設定
         testing_env!(context.signer_account_id(accounts(1)).build());
-        contract.change_status_to_stay(available_rooms[0].room_id.clone(), check_in_date.clone());
+
+        // 部屋のステータスを確認
+        let is_available = contract.is_available(booked_rooms[0].room_id.clone());
+        assert_eq!(is_available, true);
+
+        // 部屋のステータスを変更（Available -> Stay）
+        contract.change_status_to_stay(booked_rooms[0].room_id.clone(), check_in_date.clone());
+        let booked_rooms = contract.get_booking_info_for_owner(owner_id.clone());
+        assert_ne!(booked_rooms[0].status, UsageStatus::Available);
+
+        // 再度ステータスを確認
+        let is_available = contract.is_available(booked_rooms[0].room_id.clone());
+        assert_eq!(is_available, false);
+
+        // 部屋のステータスを変更（Stay -> Available）
         contract.change_status_to_available(
             available_rooms[0].room_id.clone(),
             check_in_date.clone(),
             booked_rooms[0].guest_id.clone(),
         );
+        // 予約データから削除されたかチェック
+        let booked_rooms = contract.get_booking_info_for_owner(owner_id.clone());
+        assert_eq!(booked_rooms.len(), 0);
 
-        // // ゲストの登録データから消えたかチェック
-        let guest_booked_info =
-            contract.get_booking_info_for_guest(booked_rooms[0].guest_id.clone());
-        println!("\n\nGUEST INFO: {:?}", guest_booked_info);
+        // 宿泊者の予約データから消えたかチェック
+        let guest_booked_info = contract.get_booking_info_for_guest(accounts(2));
         assert_eq!(guest_booked_info.len(), 0);
     }
 }
