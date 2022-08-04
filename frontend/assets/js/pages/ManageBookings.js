@@ -1,42 +1,48 @@
 import React, { useEffect, useState } from "react";
-import { Button, Table } from "react-bootstrap";
+import Button from "react-bootstrap/Button";
+import Table from "react-bootstrap/Table";
+
 import {
-  get_booked_rooms,
+  get_booking_info_for_owner,
   is_available,
   change_status_to_available,
   change_status_to_stay,
 } from "../near/utils";
 
 const ManageBookings = () => {
+  // 予約データを設定する
   const [bookedRooms, setBookedRooms] = useState([]);
 
   const getBookedRooms = async () => {
     try {
-      setBookedRooms(await get_booked_rooms(window.accountId));
+      setBookedRooms(await get_booking_info_for_owner(window.accountId));
     } catch (error) {
       console.log("ERR_DISCONNECTED_WALLET");
     }
   };
 
-  const triggerCheckIn = async (name, check_in_date) => {
-    let isAvailable = await is_available(window.accountId, name);
+  const handleCheckIn = async (room_id, check_in_date) => {
+    let isAvailable = await is_available(room_id);
     if (isAvailable == false) {
-      alert('Error "Someone already stay."');
+      // 誰かが滞在中の部屋に対して`Check In`ボタンを押すとアラートを発生させる
+      alert("Error: Someone already stay.");
       return;
     }
     try {
-      change_status_to_stay(name, check_in_date).then((resp) => {
+      change_status_to_stay(room_id, check_in_date).then((resp) => {
         getBookedRooms();
       });
     } catch (error) {
       console.log({ error });
     }
   };
-  const triggerCheckOut = async (name, check_in_date, guest_id) => {
+  const handleCheckOut = async (room_id, check_in_date, guest_id) => {
     try {
-      change_status_to_available(name, check_in_date, guest_id).then((resp) => {
-        getBookedRooms();
-      });
+      change_status_to_available(room_id, check_in_date, guest_id).then(
+        (resp) => {
+          getBookedRooms();
+        }
+      );
     } catch (error) {
       console.log({ error });
     }
@@ -46,6 +52,7 @@ const ManageBookings = () => {
     getBookedRooms();
   }, []);
 
+  // NEAR Walletに接続されていない時
   if (!window.accountId) {
     return (
       <>
@@ -53,6 +60,8 @@ const ManageBookings = () => {
       </>
     );
   }
+  // NEAR Walletに接続されている時
+  // // ｀Check In/Check Out`ボタンを持つ予約データをテーブルで表示
   return (
     <>
       <h2>BOOKED LIST</h2>
@@ -66,7 +75,7 @@ const ManageBookings = () => {
           </tr>
         </thead>
         {bookedRooms.map((_room) => (
-          <tbody key={_room.name + _room.check_in_date}>
+          <tbody key={_room.room_id + _room.check_in_date}>
             <tr>
               <td>{_room.name}</td>
               <td>{_room.check_in_date}</td>
@@ -77,7 +86,7 @@ const ManageBookings = () => {
                     variant='success'
                     size='sm'
                     onClick={(e) =>
-                      triggerCheckIn(_room.name, _room.check_in_date, e)
+                      handleCheckIn(_room.room_id, _room.check_in_date, e)
                     }
                   >
                     Check In
@@ -88,8 +97,8 @@ const ManageBookings = () => {
                     variant='danger'
                     size='sm'
                     onClick={(e) =>
-                      triggerCheckOut(
-                        _room.name,
+                      handleCheckOut(
+                        _room.room_id,
                         _room.check_in_date,
                         _room.guest_id,
                         e
