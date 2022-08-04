@@ -1,5 +1,7 @@
-const CONTRACT_NAME = process.env.CONTRACT_NAME || "new-awesome-project";
+const CONTRACT_NAME =
+  process.env.CONTRACT_NAME || "contract.hotel_booking.testnet";
 
+// デフォルトのまま使用
 function getConfig(env) {
   switch (env) {
     case "production":

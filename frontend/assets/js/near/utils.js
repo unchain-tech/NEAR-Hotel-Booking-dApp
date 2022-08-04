@@ -53,7 +53,7 @@ export async function initContract() {
 
 export function logout() {
   window.walletConnection.signOut();
-  // reload page
+  // ページをリロード
   window.location.replace(window.location.origin + window.location.pathname);
 }
 
@@ -68,15 +68,8 @@ export async function accountBalance() {
   );
 }
 
-// export async function getAccountId() {
-//   return window.walletConnection.getAccountId();
-// }
-
-// export async function get_all_rooms() {
-//   let all_rooms = await window.contract.get_all_rooms();
-//   return all_rooms;
-// }
-
+// コールするメソッドの処理を定義
+// // 実際に引数を渡す処理は全てここに実装
 export async function get_available_rooms(searchDate) {
   let availableRooms = await window.contract.get_available_rooms({
     check_in_date: searchDate,
@@ -90,14 +83,6 @@ export async function get_rooms_registered_by_owner(owner_id) {
   });
   return registeredRooms;
 }
-
-// export async function get_room(owner_id, name) {
-//   let room = await window.contract.get_room({
-//     owner_id: owner_id,
-//     name: name,
-//   });
-//   return room;
-// }
 
 export async function get_booking_info_for_owner(owner_id) {
   let bookedRooms = await window.contract.get_booking_info_for_owner({
