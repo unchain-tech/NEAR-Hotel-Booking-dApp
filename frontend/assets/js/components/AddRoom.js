@@ -1,8 +1,12 @@
 import React, { useState } from "react";
+import Button from "react-bootstrap/Button";
+import Form from "react-bootstrap/Form";
+import Modal from "react-bootstrap/Modal";
+
 import PropTypes from "prop-types";
-import { Button, Modal, Form } from "react-bootstrap";
 
 const AddRoom = ({ save }) => {
+  // フォームで入力されたデータを取得・設定する
   const [name, setName] = useState("");
   const [beds, setBeds] = useState(0);
   const [image, setImage] = useState("");
@@ -13,12 +17,11 @@ const AddRoom = ({ save }) => {
   const isFormFilled = () =>
     name && beds && image && description && location && price;
 
+  // 入力フォームの表示・非表示を管理する
   const [show, setShow] = useState(false);
-
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
-  //...
-  //...
+
   return (
     <>
       <Button onClick={handleShow}>POST</Button>
@@ -28,6 +31,7 @@ const AddRoom = ({ save }) => {
         </Modal.Header>
         <Form>
           <Modal.Body>
+            {/* 部屋の名前 */}
             <Form.Group className='mb-3' controlId='inputName'>
               <Form.Label>Name</Form.Label>
               <Form.Control
@@ -38,6 +42,7 @@ const AddRoom = ({ save }) => {
                 placeholder='Enter name of Room'
               />
             </Form.Group>
+            {/* 部屋の画像 */}
             <Form.Group className='mb-3' controlId='inputUrl'>
               <Form.Label>Image</Form.Label>
               <Form.Control
@@ -48,6 +53,7 @@ const AddRoom = ({ save }) => {
                 }}
               />
             </Form.Group>
+            {/* ベッドの数 */}
             <Form.Group className='mb-3' controlId='inputBeds'>
               <Form.Label>Beds</Form.Label>
               <Form.Control
@@ -59,6 +65,7 @@ const AddRoom = ({ save }) => {
                 placeholder='Number of Beds'
               />
             </Form.Group>
+            {/* 部屋の説明 */}
             <Form.Group className='mb-3' controlId='inputDescription'>
               <Form.Label>Description</Form.Label>
               <Form.Control
@@ -70,6 +77,7 @@ const AddRoom = ({ save }) => {
                 }}
               />
             </Form.Group>
+            {/* ホテルの場所 */}
             <Form.Group className='mb-3' controlId='inputLocation'>
               <Form.Label>Location</Form.Label>
               <Form.Control
@@ -80,6 +88,7 @@ const AddRoom = ({ save }) => {
                 }}
               />
             </Form.Group>
+            {/* 一泊の価格（NEAR） */}
             <Form.Group className='mb-3' controlId='inputPrice'>
               <Form.Label>Price</Form.Label>
               <Form.Control

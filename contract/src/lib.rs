@@ -1,11 +1,11 @@
-use std::collections::HashMap;
-use std::vec;
-
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LookupMap;
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{env, near_bindgen, AccountId, Promise};
+
+use std::collections::HashMap;
+use std::vec;
 
 type RoomId = String;
 type CheckInDate = String;
@@ -179,6 +179,14 @@ impl Contract {
             .expect("ERR_NOT_FOUND_ROOM");
 
         room.status = UsageStatus::Stay { check_in_date };
+    }
+
+    // `room_id`が既に存在するかを確認する
+    // // 同じ部屋名を複数所有することは想定しないため、`add_room_to_owner`を実行する前にコールされる
+    pub fn exists(&self, owner_id: AccountId, room_name: String) -> bool {
+        let room_id = format!("{}{}", owner_id, room_name);
+
+        self.rooms_by_id.contains_key(&room_id)
     }
 
     // changeメソッドの`change_status_to_stay`を実行する前に、部屋の利用状況を確認する

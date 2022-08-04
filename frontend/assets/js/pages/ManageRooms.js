@@ -1,29 +1,37 @@
 import React, { useEffect, useState } from "react";
-import Table from "react-bootstrap/Table";
-import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
+import Row from "react-bootstrap/Row";
+import Table from "react-bootstrap/Table";
 
-import { utils } from "near-api-js";
+import AddRoom from "../components/AddRoom";
+
+import { formatNearAmount } from "near-api-js/lib/utils/format";
 
 import {
   get_rooms_registered_by_owner,
+  exists,
   add_room_to_owner,
 } from "../near/utils";
-import AddRoom from "../components/hotelbooking/AddRoom";
 
 const ManageRooms = () => {
-  const [rooms, setRooms] = useState([]);
+  const [registeredRooms, setRegisteredRooms] = useState([]);
 
   const getRooms = async () => {
     try {
-      setRooms(await get_rooms_registered_by_owner(window.accountId));
+      setRegisteredRooms(await get_rooms_registered_by_owner(window.accountId));
     } catch (error) {
       console.log("ERR_DISCONNECTED_WALLET");
     }
   };
 
   const addRoom = async (data) => {
-    add_room_to_owner(data);
+    // 同じ名前の部屋を登録しないかチェック
+    let exist = await exists(window.accountId, data.name);
+    if (exist == true) {
+      alert("Error: " + data.name + " is already registered.");
+      return;
+    }
+    await add_room_to_owner(data);
     getRooms();
   };
 
@@ -31,6 +39,7 @@ const ManageRooms = () => {
     getRooms();
   }, []);
 
+  // NEAR Walletに接続されていない時
   if (!window.accountId) {
     return (
       <>
@@ -38,6 +47,8 @@ const ManageRooms = () => {
       </>
     );
   }
+  // NEAR Walletに接続されている時
+  // // 登録した部屋を表示
   return (
     <>
       <Row>
@@ -62,8 +73,9 @@ const ManageRooms = () => {
             <th scope='col'>Status</th>
           </tr>
         </thead>
-        {rooms.map((_room) => (
+        {registeredRooms.map((_room) => (
           <tbody key={`${_room.name}`}>
+            {/* 部屋が空室の時 */}
             {_room.status === "Available" && (
               <tr>
                 <td>{_room.name}</td>
@@ -73,10 +85,11 @@ const ManageRooms = () => {
                 <td>{_room.beds}</td>
                 <td>{_room.description}</td>
                 <td>{_room.location}</td>
-                <td>{utils.format.formatNearAmount(_room.price)} NEAR</td>
+                <td>{formatNearAmount(_room.price)} NEAR</td>
                 <td>{_room.status}</td>
               </tr>
             )}
+            {/* 部屋が滞在中の時、背景を赤で表示 */}
             {_room.status !== "Available" && (
               <tr style={{ backgroundColor: "#FFC0CB" }}>
                 <td>{_room.name}</td>
@@ -86,7 +99,7 @@ const ManageRooms = () => {
                 <td>{_room.beds}</td>
                 <td>{_room.description}</td>
                 <td>{_room.location}</td>
-                <td>{utils.format.formatNearAmount(_room.price)} NEAR</td>
+                <td>{formatNearAmount(_room.price)} NEAR</td>
                 <td>Stay</td>
               </tr>
             )}

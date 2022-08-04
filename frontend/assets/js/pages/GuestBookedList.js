@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Table } from "react-bootstrap";
+
 import { get_booking_info_for_guest } from "../near/utils";
 
 const GuestBookedList = () => {
-  const [bookedRooms, setBookedRooms] = useState([]);
+  // 予約した部屋のデータを設定する
+  const [guestBookedRooms, setGuestBookedRooms] = useState([]);
 
   const getGuestBookedRooms = async () => {
     try {
-      setBookedRooms(await get_booking_info_for_guest(window.accountId));
+      setGuestBookedRooms(await get_booking_info_for_guest(window.accountId));
     } catch (error) {
       console.log("ERR_DISCONNECTED_WALLET");
     }
@@ -17,6 +19,7 @@ const GuestBookedList = () => {
     getGuestBookedRooms();
   }, []);
 
+  // NEAR Walletに接続されていない時
   if (!window.accountId) {
     return (
       <>
@@ -24,6 +27,8 @@ const GuestBookedList = () => {
       </>
     );
   }
+  // NEAR Walletに接続されている時
+  // // 予約したデータをテーブルで表示
   return (
     <>
       <h2>BOOKED LIST</h2>
@@ -35,7 +40,7 @@ const GuestBookedList = () => {
             <th scope='col'>Check In</th>
           </tr>
         </thead>
-        {bookedRooms.map((_room) => (
+        {guestBookedRooms.map((_room) => (
           <tbody key={_room.room_id}>
             <tr>
               <td>{_room.owner_id}</td>

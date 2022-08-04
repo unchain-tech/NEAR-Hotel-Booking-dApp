@@ -1,27 +1,21 @@
 import React from "react";
-import PropTypes from "prop-types";
-import { utils } from "near-api-js";
+import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
-import Button from "react-bootstrap/Button";
 import Image from "react-bootstrap/Image";
 
-const Room = ({ room, booking }) => {
-  const {
-    room_id,
-    owner_id,
-    name,
-    image,
-    beds,
-    description,
-    location,
-    price,
-    use_time,
-  } = room;
+import PropTypes from "prop-types";
 
-  const triggerBooking = () => {
+import { formatNearAmount } from "near-api-js/lib/utils/format";
+
+const Room = ({ room, booking }) => {
+  // roomオブジェクトからデータを取得
+  const { room_id, owner_id, name, image, beds, description, location, price } =
+    room;
+
+  const handleBooking = () => {
+    // `Search.js`のbookingに引数を渡す
     booking(room_id, price);
-    console.log("Called booking in triggerBooking");
   };
 
   return (
@@ -45,15 +39,16 @@ const Room = ({ room, booking }) => {
         <Button
           variant='outline-dark'
           disabled={!window.accountId}
-          onClick={triggerBooking}
+          onClick={handleBooking}
         >
-          Book for {utils.format.formatNearAmount(price)} NEAR
+          Book for {formatNearAmount(price)} NEAR
         </Button>
       </Col>
     </Row>
   );
 };
 
+// 引数の型を定義
 Room.PrpoTypes = {
   room: PropTypes.instanceOf(Object).isRequired,
   booking: PropTypes.func.isRequired,
