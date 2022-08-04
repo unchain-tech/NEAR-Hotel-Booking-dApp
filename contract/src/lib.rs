@@ -13,11 +13,11 @@ type CheckInDate = String;
 #[derive(Serialize, Deserialize, Debug, BorshSerialize, BorshDeserialize, PartialEq)]
 #[serde(crate = "near_sdk::serde")]
 pub enum UsageStatus {
-    Available,
-    Stay { check_in_date: CheckInDate },
+    Available,                           // 空室
+    Stay { check_in_date: CheckInDate }, // 滞在中
 }
 
-// オーナーが掲載した部屋一覧を表示する際に使用
+// オーナーが登録した部屋一覧を表示する際に使用
 #[derive(Serialize, Deserialize, Debug, BorshSerialize, BorshDeserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct ResigteredRoom {
@@ -55,6 +55,16 @@ pub struct AvailableRoom {
     price: U128,
 }
 
+// 宿泊者が予約を確認する際に使用
+#[derive(Serialize, Deserialize, Debug, BorshSerialize, BorshDeserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct GuestBookedRoom {
+    owner_id: AccountId,
+    room_name: String,
+    check_in_date: CheckInDate,
+}
+
+// 実際にスマートコントラクト内に保存される部屋のデータ
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct Room {
     name: String,
@@ -68,20 +78,18 @@ pub struct Room {
     booked_info: HashMap<CheckInDate, AccountId>,
 }
 
-// 宿泊者が予約を確認する際に使用
-#[derive(Serialize, Deserialize, Debug, BorshSerialize, BorshDeserialize)]
-#[serde(crate = "near_sdk::serde")]
-pub struct GuestBookedRoom {
-    owner_id: AccountId,
-    room_name: String,
-    check_in_date: CheckInDate,
-}
-
+// LookupMap: 反復処理を行わないデータに使用
+// https://www.near-sdk.io/contract-structure/collections
 #[near_bindgen]
 #[derive(BorshSerialize, BorshDeserialize)]
 pub struct Contract {
+    // オーナーと所有する部屋のIDを紐付けて保持
     rooms_per_owner: LookupMap<AccountId, Vec<RoomId>>,
+
+    // 部屋のIDと部屋のデータを紐付けて保持
     rooms_by_id: HashMap<RoomId, Room>,
+
+    // 宿泊者のアカウントIDと予約データを紐付けて保持
     bookings_per_guest: HashMap<AccountId, HashMap<CheckInDate, RoomId>>,
 }
 
@@ -106,7 +114,10 @@ impl Contract {
         location: String,
         price: U128,
     ) {
+        // 関数をコールしたアカウントIDを取得
         let owner_id = env::signer_account_id();
+
+        // 部屋のIDをオーナーのアカウントIDと部屋の名前で作成
         let room_id = format!("{}{}", owner_id, name);
         let new_room = Room {
             owner_id: owner_id.clone(),
@@ -120,16 +131,16 @@ impl Contract {
             booked_info: HashMap::new(),
         };
 
-        // 部屋の情報をを一意なIDと紐付けて保存
+        // 部屋のデータを`room_id`と紐付けて保存
         self.rooms_by_id.insert(room_id.clone(), new_room);
 
         match self.rooms_per_owner.get(&owner_id) {
-            // 既にオーナーが別の部屋を登録済みの時
+            // オーナーが既に別の部屋を登録済みの時
             Some(mut rooms) => {
                 rooms.push(room_id.clone());
                 self.rooms_per_owner.insert(&owner_id, &rooms);
             }
-            // 初めて部屋を登録する時
+            // オーナーが初めて部屋を登録する時
             None => {
                 let new_rooms = vec![room_id];
                 self.rooms_per_owner.insert(&owner_id, &new_rooms);
@@ -149,14 +160,14 @@ impl Contract {
             .get_mut(&room_id)
             .expect("ERR_NOT_FOUND_ROOM");
 
-        // 部屋が持つ予約情報の削除
+        // 部屋が持つ予約データの削除
         room.booked_info
             .remove(&check_in_date)
             .expect("ERR_NOT_FOUND_DATE");
 
         room.status = UsageStatus::Available;
 
-        // 宿泊者が持つ予約情報を削除
+        // 宿泊者が持つ予約データを削除
         self.remove_booking_from_guest(guest_id, check_in_date);
     }
 
@@ -170,6 +181,7 @@ impl Contract {
         room.status = UsageStatus::Stay { check_in_date };
     }
 
+    // changeメソッドの`change_status_to_stay`を実行する前に、部屋の利用状況を確認する
     pub fn is_available(&self, room_id: RoomId) -> bool {
         let room = self.rooms_by_id.get(&room_id).expect("ERR_NOT_FOUND_ROOM");
 
@@ -187,7 +199,7 @@ impl Contract {
             match room.booked_info.get(&check_in_date) {
                 // 宿泊希望日に既に予約が入っていたら何もしない
                 Some(_) => continue,
-                // 予約が入っていなかったら、部屋の情報を取得
+                // 予約が入っていなかったら、部屋のデータを作成
                 None => {
                     let available_room = AvailableRoom {
                         room_id: room_id.clone(),
@@ -216,7 +228,8 @@ impl Contract {
                     // 登録された部屋ごとにデータを作成
                     let room = self.rooms_by_id.get(&room_id).expect("ERR_NOT_FOUND_ROOM");
 
-                    // statusを複製
+                    // UseStatusを複製
+                    // `String`はCopyトレイトを持つことができないため、複製する必要がある
                     let status: UsageStatus;
                     match room.status {
                         UsageStatus::Available => status = UsageStatus::Available,
@@ -234,7 +247,7 @@ impl Contract {
                         description: room.description.clone(),
                         location: room.location.clone(),
                         price: room.price,
-                        status: status,
+                        status,
                     };
                     registered_rooms.push(resigtered_room);
                 }
@@ -258,6 +271,7 @@ impl Contract {
                     }
                     // 予約された日付ごとに予約データを作成
                     for (date, guest_id) in room.booked_info.clone() {
+                        // UseStatusを複製
                         let status: UsageStatus;
                         match room.status {
                             UsageStatus::Available => status = UsageStatus::Available,
@@ -275,8 +289,8 @@ impl Contract {
                             room_id: room_id.to_string(),
                             name: room.name.clone(),
                             check_in_date: date,
-                            guest_id: guest_id,
-                            status: status,
+                            guest_id,
+                            status,
                         };
                         booked_rooms.push(booked_room);
                     }
@@ -288,32 +302,7 @@ impl Contract {
         }
     }
 
-    // 部屋を予約する
-    #[payable]
-    pub fn book_room(&mut self, room_id: RoomId, check_in_date: CheckInDate) {
-        let room = self
-            .rooms_by_id
-            .get_mut(&room_id)
-            .expect("ERR_NOT_FOUND_ROOM");
-
-        let account_id = env::signer_account_id();
-        let deposit = env::attached_deposit();
-        // 支払う予定のNEARと実際の宿泊料NEARを比較するためにキャストをする
-        let room_price: u128 = room.price.clone().into();
-        assert_eq!(deposit, room_price, "ERR_DEPOSIT_IS_INCORRECT");
-
-        // 予約が入った日付, 宿泊者IDを登録
-        room.booked_info
-            .insert(check_in_date.clone(), account_id.clone());
-
-        // 宿泊者に予約情報を保存
-        let owner_id = room.owner_id.clone();
-        self.add_booking_to_guest(account_id, room_id, check_in_date);
-
-        // 宿泊料を支払う
-        Promise::new(owner_id).transfer(deposit);
-    }
-
+    // 宿泊者に表示する予約データを取得
     pub fn get_booking_info_for_guest(&self, guest_id: AccountId) -> Vec<GuestBookedRoom> {
         let mut guest_info: Vec<GuestBookedRoom> = vec![];
         match self.bookings_per_guest.get(&guest_id) {
@@ -332,10 +321,39 @@ impl Contract {
             None => guest_info,
         }
     }
+
+    // 部屋を予約する
+    #[payable]
+    pub fn book_room(&mut self, room_id: RoomId, check_in_date: CheckInDate) {
+        let room = self
+            .rooms_by_id
+            .get_mut(&room_id)
+            .expect("ERR_NOT_FOUND_ROOM");
+
+        let account_id = env::signer_account_id();
+
+        // 関数コール時に送付されたNEARを取得
+        let deposit = env::attached_deposit();
+        // 送付されたNEARと実際の宿泊料（NEAR）を比較するためにキャストをする
+        let room_price: u128 = room.price.clone().into();
+        assert_eq!(deposit, room_price, "ERR_DEPOSIT_IS_INCORRECT");
+
+        // 予約が入った日付, 宿泊者IDを登録
+        room.booked_info
+            .insert(check_in_date.clone(), account_id.clone());
+
+        // 宿泊者に予約データを保存
+        let owner_id = room.owner_id.clone();
+        self.add_booking_to_guest(account_id, room_id, check_in_date);
+
+        // 宿泊料を部屋のオーナーへ支払う
+        Promise::new(owner_id).transfer(deposit);
+    }
 }
 
 // Private functions
 impl Contract {
+    // 予約データを宿泊者用に保存する
     fn add_booking_to_guest(
         &mut self,
         guest_id: AccountId,
@@ -343,9 +361,11 @@ impl Contract {
         check_in_date: CheckInDate,
     ) {
         match self.bookings_per_guest.get_mut(&guest_id) {
+            // 宿泊者が既に別の予約データを所有している時
             Some(booked_date) => {
                 booked_date.insert(check_in_date.clone(), room_id);
             }
+            // 初めて予約データを保存する時
             None => {
                 let mut new_guest_date = HashMap::new();
                 new_guest_date.insert(check_in_date.clone(), room_id);
@@ -354,9 +374,9 @@ impl Contract {
         }
     }
 
-    // 宿泊者の持つ予約情報から、宿泊済みのデータを削除する
+    // 宿泊者の持つ予約データから、宿泊済みのデータを削除する
     fn remove_booking_from_guest(&mut self, guest_id: AccountId, check_in_data: CheckInDate) {
-        // 宿泊者が持っている予約情報のmapを取得
+        // 宿泊者が持っている予約データのmapを取得
         let book_info = self
             .bookings_per_guest
             .get_mut(&guest_id)
@@ -366,7 +386,7 @@ impl Contract {
             .remove(&check_in_data)
             .expect("ERR_NOT_FOUND_BOOKED");
 
-        // 予約情報が空になった場合、`bookings_per_guest`からゲストを削除する
+        // 予約データが空になった場合、`bookings_per_guest`からゲストを削除する
         if book_info.is_empty() {
             self.bookings_per_guest.remove(&guest_id);
         }
@@ -537,7 +557,7 @@ mod tests {
             booked_rooms[0].guest_id.clone(),
         );
 
-        // // ゲストの登録情報から消えたかチェック
+        // // ゲストの登録データから消えたかチェック
         let guest_booked_info =
             contract.get_booking_info_for_guest(booked_rooms[0].guest_id.clone());
         println!("\n\nGUEST INFO: {:?}", guest_booked_info);
