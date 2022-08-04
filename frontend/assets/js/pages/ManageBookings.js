@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Button, Table } from "react-bootstrap";
 import {
-  get_booked_rooms,
+  get_booking_info_for_owner,
   is_available,
   change_status_to_available,
   change_status_to_stay,
@@ -12,7 +12,7 @@ const ManageBookings = () => {
 
   const getBookedRooms = async () => {
     try {
-      setBookedRooms(await get_booked_rooms(window.accountId));
+      setBookedRooms(await get_booking_info_for_owner(window.accountId));
     } catch (error) {
       console.log("ERR_DISCONNECTED_WALLET");
     }

@@ -37,14 +37,10 @@ const Room = ({ room, booking }) => {
         <h5>{location}</h5>
       </Col>
       <Col xs={2}>
-        <p>Check in</p>
-        <h6>{use_time.check_in}</h6>
-        <p>Check out</p>
-        <h6>{use_time.check_out}</h6>
-      </Col>
-      <Col xs={3}>
         <p>Beds</p>
         <h6>{beds}</h6>
+      </Col>
+      <Col xs={3}>
         <h6>1 night</h6>
         <Button
           variant='outline-dark'

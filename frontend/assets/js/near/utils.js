@@ -35,10 +35,10 @@ export async function initContract() {
     {
       viewMethods: [
         "get_available_rooms",
-        "get_hotel_rooms",
+        "get_rooms_registered_by_owner",
         // "get_room",
-        "get_booked_rooms",
-        "get_guest_booked_info",
+        "get_booking_info_for_owner",
+        "get_booking_info_for_guest",
         "is_available",
       ],
       changeMethods: [
@@ -87,9 +87,9 @@ export async function get_available_rooms(searchDate) {
   return available_rooms;
 }
 
-export async function get_hotel_rooms(owner_id) {
+export async function get_rooms_registered_by_owner(owner_id) {
   console.log("ID:", owner_id);
-  let hotel_rooms = await window.contract.get_hotel_rooms({
+  let hotel_rooms = await window.contract.get_rooms_registered_by_owner({
     owner_id: owner_id,
   });
   return hotel_rooms;
@@ -103,15 +103,15 @@ export async function get_hotel_rooms(owner_id) {
 //   return room;
 // }
 
-export async function get_booked_rooms(owner_id) {
-  let room = await window.contract.get_booked_rooms({
+export async function get_booking_info_for_owner(owner_id) {
+  let room = await window.contract.get_booking_info_for_owner({
     owner_id: owner_id,
   });
   return room;
 }
 
-export async function get_guest_booked_info(guest_id) {
-  let room = await window.contract.get_guest_booked_info({
+export async function get_booking_info_for_guest(guest_id) {
+  let room = await window.contract.get_booking_info_for_guest({
     guest_id: guest_id,
   });
   return room;
@@ -134,8 +134,8 @@ export function add_room_to_owner(room) {
     description: room.description,
     location: room.location,
     price: room.price,
-    check_in: room.checkIn,
-    check_out: room.checkOut,
+    // check_in: room.checkIn,
+    // check_out: room.checkOut,
   });
 }
 

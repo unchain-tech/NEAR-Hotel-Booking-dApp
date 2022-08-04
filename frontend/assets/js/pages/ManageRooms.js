@@ -5,7 +5,10 @@ import Col from "react-bootstrap/Col";
 
 import { utils } from "near-api-js";
 
-import { get_hotel_rooms, add_room_to_owner } from "../near/utils";
+import {
+  get_rooms_registered_by_owner,
+  add_room_to_owner,
+} from "../near/utils";
 import AddRoom from "../components/hotelbooking/AddRoom";
 
 const ManageRooms = () => {
@@ -13,7 +16,7 @@ const ManageRooms = () => {
 
   const getRooms = async () => {
     try {
-      setRooms(await get_hotel_rooms(window.accountId));
+      setRooms(await get_rooms_registered_by_owner(window.accountId));
     } catch (error) {
       console.log("ERR_DISCONNECTED_WALLET");
     }
@@ -56,7 +59,6 @@ const ManageRooms = () => {
             <th scope='col'>Description</th>
             <th scope='col'>Location</th>
             <th scope='col'>Price per night</th>
-            <th scope='col'>Use Time</th>
             <th scope='col'>Status</th>
           </tr>
         </thead>
@@ -72,10 +74,6 @@ const ManageRooms = () => {
                 <td>{_room.description}</td>
                 <td>{_room.location}</td>
                 <td>{utils.format.formatNearAmount(_room.price)} NEAR</td>
-                <td>
-                  {_room.use_time.check_in} - {_room.use_time.check_out}
-                </td>
-
                 <td>{_room.status}</td>
               </tr>
             )}
@@ -89,10 +87,6 @@ const ManageRooms = () => {
                 <td>{_room.description}</td>
                 <td>{_room.location}</td>
                 <td>{utils.format.formatNearAmount(_room.price)} NEAR</td>
-                <td>
-                  {_room.use_time.check_in} - {_room.use_time.check_out}
-                </td>
-
                 <td>Stay</td>
               </tr>
             )}

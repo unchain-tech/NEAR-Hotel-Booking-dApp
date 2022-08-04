@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Table } from "react-bootstrap";
-import { get_guest_booked_info } from "../near/utils";
+import { get_booking_info_for_guest } from "../near/utils";
 
 const GuestBookedList = () => {
   const [bookedRooms, setBookedRooms] = useState([]);
 
   const getGuestBookedRooms = async () => {
     try {
-      setBookedRooms(await get_guest_booked_info(window.accountId));
+      setBookedRooms(await get_booking_info_for_guest(window.accountId));
     } catch (error) {
       console.log("ERR_DISCONNECTED_WALLET");
     }
@@ -41,7 +41,6 @@ const GuestBookedList = () => {
               <td>{_room.owner_id}</td>
               <td>{_room.room_name}</td>
               <td>{_room.check_in_date}</td>
-              <td>{_room.check_in_time}</td>
             </tr>
           </tbody>
         ))}

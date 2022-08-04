@@ -5,22 +5,13 @@ import { Button, Modal, Form } from "react-bootstrap";
 const AddRoom = ({ save }) => {
   const [name, setName] = useState("");
   const [beds, setBeds] = useState(0);
-  const [checkIn, setCheckIn] = useState("");
-  const [checkOut, setCheckOut] = useState("");
   const [image, setImage] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [price, setPrice] = useState(0);
   // 全ての項目が入力されたか確認する
   const isFormFilled = () =>
-    name &&
-    beds &&
-    image &&
-    description &&
-    location &&
-    price &&
-    checkIn &&
-    checkOut;
+    name && beds && image && description && location && price;
 
   const [show, setShow] = useState(false);
 
@@ -100,26 +91,6 @@ const AddRoom = ({ save }) => {
                 }}
               />
             </Form.Group>
-            <Form.Group className='mb-3' controlId='inputCheckIn'>
-              <Form.Label>Check in</Form.Label>
-              <Form.Control
-                type='time'
-                onChange={(e) => {
-                  setCheckIn(e.target.value);
-                }}
-                placeholder='Check in'
-              />
-            </Form.Group>
-            <Form.Group className='mb-3' controlId='inputCheckOut'>
-              <Form.Label>Check out</Form.Label>
-              <Form.Control
-                type='time'
-                onChange={(e) => {
-                  setCheckOut(e.target.value);
-                }}
-                placeholder='Check out'
-              />
-            </Form.Group>
           </Modal.Body>
         </Form>
         <Modal.Footer>
@@ -138,8 +109,6 @@ const AddRoom = ({ save }) => {
                 description,
                 location,
                 price,
-                checkIn,
-                checkOut,
               });
               handleClose();
             }}
