@@ -407,13 +407,6 @@ mod tests {
     use super::*;
     use near_sdk::test_utils::{accounts, VMContextBuilder};
     use near_sdk::testing_env;
-
-    // NEARをyoctoNEARに変換する
-    // 1 NEAR ->  10**24 yoctoNEAR
-    fn near_to_yocto(near_amount: u128) -> U128 {
-        U128(near_amount * (10u128).pow(24))
-    }
-
     // トランザクションを実行するテスト環境を設定
     fn get_context(is_view: bool) -> VMContextBuilder {
         let mut builder = VMContextBuilder::new();
@@ -425,12 +418,10 @@ mod tests {
             .is_view(is_view);
         builder
     }
-
     #[test]
     fn add_then_get_registered_rooms() {
         let context = get_context(false);
         testing_env!(context.build());
-
         let mut contract = Contract::default();
         contract.add_room_to_owner(
             "101".to_string(),
@@ -438,7 +429,7 @@ mod tests {
             1,
             "This is 101 room".to_string(),
             "Tokyo".to_string(),
-            near_to_yocto(10),
+            U128(10),
         );
         contract.add_room_to_owner(
             "201".to_string(),
@@ -446,9 +437,8 @@ mod tests {
             1,
             "This is 201 room".to_string(),
             "Tokyo".to_string(),
-            near_to_yocto(10),
+            U128(10),
         );
-
         // add_room_to_owner関数をコールしたアカウントIDを取得
         let owner_id = env::signer_account_id();
 
@@ -478,7 +468,7 @@ mod tests {
             1,
             "This is 101 room".to_string(),
             "Tokyo".to_string(),
-            near_to_yocto(10),
+            U128(10),
         );
         contract.add_room_to_owner(
             "201".to_string(),
@@ -486,7 +476,7 @@ mod tests {
             1,
             "This is 201 room".to_string(),
             "Tokyo".to_string(),
-            near_to_yocto(10),
+            U128(10),
         );
 
         // `get_available_rooms`をコールするアカウントを設定
@@ -494,6 +484,7 @@ mod tests {
         let available_rooms = contract.get_available_rooms("2222-01-01".to_string());
         assert_eq!(available_rooms.len(), 2);
     }
+
     #[test]
     fn no_available_room() {
         let context = get_context(true);
@@ -511,8 +502,8 @@ mod tests {
         let mut context = get_context(false);
 
         // 宿泊料を支払うため、NEARを設定
-        context.account_balance(near_to_yocto(20).into());
-        context.attached_deposit(near_to_yocto(10).into());
+        context.account_balance(10);
+        context.attached_deposit(10);
 
         testing_env!(context.build());
 
@@ -524,7 +515,7 @@ mod tests {
             1,
             "This is 101 room".to_string(),
             "Tokyo".to_string(),
-            near_to_yocto(10),
+            U128(10),
         );
 
         ///////////////////
