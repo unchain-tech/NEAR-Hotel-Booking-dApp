@@ -18,7 +18,7 @@ const ManageRooms = () => {
     try {
       setRegisteredRooms(await get_rooms_registered_by_owner(window.accountId));
     } catch (error) {
-      console.log('ERR_DISCONNECTED_WALLET');
+      console.log(error);
     }
   };
 

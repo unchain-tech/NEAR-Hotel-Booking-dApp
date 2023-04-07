@@ -11,7 +11,7 @@ const GuestBookedList = () => {
     try {
       setGuestBookedRooms(await get_booking_info_for_guest(window.accountId));
     } catch (error) {
-      console.log('ERR_DISCONNECTED_WALLET');
+      console.log(error);
     }
   };
 

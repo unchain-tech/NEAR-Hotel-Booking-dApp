@@ -17,7 +17,7 @@ const ManageBookings = () => {
     try {
       setBookedRooms(await get_booking_info_for_owner(window.accountId));
     } catch (error) {
-      console.log('ERR_DISCONNECTED_WALLET');
+      console.log(error);
     }
   };
 
@@ -33,7 +33,7 @@ const ManageBookings = () => {
         getBookedRooms();
       });
     } catch (error) {
-      console.log({ error });
+      console.log(error);
     }
   };
   const handleCheckOut = async (room_id, check_in_date, guest_id) => {
@@ -44,7 +44,7 @@ const ManageBookings = () => {
         },
       );
     } catch (error) {
-      console.log({ error });
+      console.log(error);
     }
   };
 
@@ -81,6 +81,7 @@ const ManageBookings = () => {
               <td>{_room.check_in_date}</td>
               <td>{_room.guest_id}</td>
               <td>
+                {/*ステータスが`Available`の時*/}
                 {_room.status === 'Available' && (
                   <Button
                     variant="success"
@@ -92,6 +93,7 @@ const ManageBookings = () => {
                     Check In
                   </Button>
                 )}
+                {/* ステータスが`Stay`の時 */}
                 {_room.status !== 'Available' && (
                   <Button
                     variant="danger"
