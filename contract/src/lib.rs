@@ -101,7 +101,7 @@ impl Default for Contract {
             bookings_per_guest: HashMap::new(),
         }
     }
-}
+};
 
 #[near_bindgen]
 impl Contract {
@@ -206,7 +206,9 @@ impl Contract {
         for (room_id, room) in self.rooms_by_id.iter() {
             match room.booked_info.get(&check_in_date) {
                 // 宿泊希望日に既に予約が入っていたら何もしない
-                Some(_) => continue,
+                Some(_) => {
+                    continue;
+                }
                 // 予約が入っていなかったら、部屋のデータを作成
                 None => {
                     let available_room = AvailableRoom {
@@ -240,11 +242,13 @@ impl Contract {
                     // `String`はCopyトレイトを持つことができないため、自分でコピーを作成する必要がある
                     let status: UsageStatus;
                     match room.status {
-                        UsageStatus::Available => status = UsageStatus::Available,
+                        UsageStatus::Available => {
+                            status = UsageStatus::Available;
+                        }
                         UsageStatus::Stay { ref check_in_date } => {
                             status = UsageStatus::Stay {
                                 check_in_date: check_in_date.clone(),
-                            }
+                            };
                         }
                     }
 
@@ -282,12 +286,14 @@ impl Contract {
                         // UseStatusを複製
                         let status: UsageStatus;
                         match room.status {
-                            UsageStatus::Available => status = UsageStatus::Available,
+                            UsageStatus::Available => {
+                                status = UsageStatus::Available;
+                            }
                             UsageStatus::Stay { ref check_in_date } => {
                                 if date == check_in_date.clone() {
                                     status = UsageStatus::Stay {
                                         check_in_date: check_in_date.clone(),
-                                    }
+                                    };
                                 } else {
                                     status = UsageStatus::Available;
                                 }
@@ -410,7 +416,7 @@ mod tests {
     // NEARをyoctoNEARに変換する
     // 1 NEAR ->  10**24 yoctoNEAR
     fn near_to_yocto(near_amount: u128) -> U128 {
-        U128(near_amount * 10u128.pow(24))
+        U128(near_amount * (10u128).pow(24))
     }
 
     // トランザクションを実行するテスト環境を設定
