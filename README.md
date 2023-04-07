@@ -5,8 +5,7 @@
 ### 1. 本リポジトリのクローン
 
 ```bash
-git clone git@github.com:unchain-tech/NEAR-
-Hotel-Booking-dApp.git
+git clone git@github.com:unchain-tech/NEAR-Hotel-Booking-dApp.git
 ```
 
 ### 2. パッケージのインストール
