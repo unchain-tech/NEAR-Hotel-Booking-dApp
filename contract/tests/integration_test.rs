@@ -6,7 +6,7 @@ use near_sdk::testing_env;
 // NEARをyoctoNEARに変換する
 // 1 NEAR ->  10**24 yoctoNEAR
 fn near_to_yocto(near_amount: u128) -> U128 {
-    U128(near_amount * 10u128.pow(24))
+    U128(near_amount * (10u128).pow(24))
 }
 
 // トランザクションを実行するテスト環境を設定

@@ -1,14 +1,15 @@
-import { connect, Contract, keyStores, WalletConnection } from "near-api-js";
+import { connect, Contract, keyStores, WalletConnection } from 'near-api-js';
 import {
   formatNearAmount,
   parseNearAmount,
-} from "near-api-js/lib/utils/format";
-import getConfig from "./config";
+} from 'near-api-js/lib/utils/format';
+
+import getConfig from './config';
 
 // トランザクション実行時に使用するGASの上限を設定
 const GAS = 100000000000000;
 
-const nearConfig = getConfig(process.env.NODE_ENV || "development");
+const nearConfig = getConfig(process.env.NODE_ENV || 'development');
 
 // コントラクトの初期化とグローバル変数を設定
 export async function initContract() {
@@ -16,8 +17,8 @@ export async function initContract() {
   const near = await connect(
     Object.assign(
       { deps: { keyStore: new keyStores.BrowserLocalStorageKeyStore() } },
-      nearConfig
-    )
+      nearConfig,
+    ),
   );
 
   // ウォレットベースのアカウントを初期化
@@ -34,20 +35,20 @@ export async function initContract() {
     nearConfig.contractName,
     {
       viewMethods: [
-        "get_available_rooms",
-        "get_rooms_registered_by_owner",
-        "get_booking_info_for_owner",
-        "get_booking_info_for_guest",
-        "exists",
-        "is_available",
+        'get_available_rooms',
+        'get_rooms_registered_by_owner',
+        'get_booking_info_for_owner',
+        'get_booking_info_for_guest',
+        'exists',
+        'is_available',
       ],
       changeMethods: [
-        "add_room_to_owner",
-        "book_room",
-        "change_status_to_available",
-        "change_status_to_stay",
+        'add_room_to_owner',
+        'book_room',
+        'change_status_to_available',
+        'change_status_to_stay',
       ],
-    }
+    },
   );
 }
 
@@ -64,51 +65,51 @@ export function login() {
 export async function accountBalance() {
   return formatNearAmount(
     (await window.walletConnection.account().getAccountBalance()).total,
-    2
+    2,
   );
 }
 
 // コールするメソッドの処理を定義
 // // 実際に引数を渡す処理は全てここに実装
-export async function get_available_rooms(searchDate) {
-  let availableRooms = await window.contract.get_available_rooms({
-    check_in_date: searchDate,
+export async function get_available_rooms(check_in_date) {
+  const availableRooms = await window.contract.get_available_rooms({
+    check_in_date,
   });
   return availableRooms;
 }
 
 export async function get_rooms_registered_by_owner(owner_id) {
-  let registeredRooms = await window.contract.get_rooms_registered_by_owner({
-    owner_id: owner_id,
+  const registeredRooms = await window.contract.get_rooms_registered_by_owner({
+    owner_id,
   });
   return registeredRooms;
 }
 
 export async function get_booking_info_for_owner(owner_id) {
-  let bookedRooms = await window.contract.get_booking_info_for_owner({
-    owner_id: owner_id,
+  const bookedRooms = await window.contract.get_booking_info_for_owner({
+    owner_id,
   });
   return bookedRooms;
 }
 
 export async function get_booking_info_for_guest(guest_id) {
-  let guestBookedRooms = await window.contract.get_booking_info_for_guest({
-    guest_id: guest_id,
+  const guestBookedRooms = await window.contract.get_booking_info_for_guest({
+    guest_id,
   });
   return guestBookedRooms;
 }
 
 export async function exists(owner_id, room_name) {
-  let ret = await window.contract.exists({
-    owner_id: owner_id,
-    room_name: room_name,
+  const ret = await window.contract.exists({
+    owner_id,
+    room_name,
   });
   return ret;
 }
 
 export async function is_available(room_id) {
-  let ret = await window.contract.is_available({
-    room_id: room_id,
+  const ret = await window.contract.is_available({
+    room_id,
   });
   return ret;
 }
@@ -130,29 +131,29 @@ export async function add_room_to_owner(room) {
 export async function book_room({ room_id, date, price }) {
   await window.contract.book_room(
     {
-      room_id: room_id,
+      room_id,
       check_in_date: date,
     },
     GAS,
-    price
+    price,
   );
 }
 
 export async function change_status_to_available(
   room_id,
   check_in_date,
-  guest_id
+  guest_id,
 ) {
   await window.contract.change_status_to_available({
-    room_id: room_id,
-    check_in_date: check_in_date,
-    guest_id: guest_id,
+    room_id,
+    check_in_date,
+    guest_id,
   });
 }
 
 export async function change_status_to_stay(room_id, check_in_date) {
   await window.contract.change_status_to_stay({
-    room_id: room_id,
-    check_in_date: check_in_date,
+    room_id,
+    check_in_date,
   });
 }

@@ -1,17 +1,16 @@
-import React, { useState } from "react";
-import Button from "react-bootstrap/Button";
-import Form from "react-bootstrap/Form";
-import Modal from "react-bootstrap/Modal";
-
-import PropTypes from "prop-types";
+import PropTypes from 'prop-types';
+import { useState } from 'react';
+import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form';
+import Modal from 'react-bootstrap/Modal';
 
 const AddRoom = ({ save }) => {
   // フォームで入力されたデータを取得・設定する
-  const [name, setName] = useState("");
+  const [name, setName] = useState('');
   const [beds, setBeds] = useState(0);
-  const [image, setImage] = useState("");
-  const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
+  const [image, setImage] = useState('');
+  const [description, setDescription] = useState('');
+  const [location, setLocation] = useState('');
   const [price, setPrice] = useState(0);
   // 全ての項目が入力されたか確認する
   const isFormFilled = () =>
@@ -32,69 +31,69 @@ const AddRoom = ({ save }) => {
         <Form>
           <Modal.Body>
             {/* 部屋の名前 */}
-            <Form.Group className='mb-3' controlId='inputName'>
+            <Form.Group className="mb-3" controlId="inputName">
               <Form.Label>Name</Form.Label>
               <Form.Control
-                type='text'
+                type="text"
                 onChange={(e) => {
                   setName(e.target.value);
                 }}
-                placeholder='Enter name of Room'
+                placeholder="Enter name of Room"
               />
             </Form.Group>
             {/* 部屋の画像 */}
-            <Form.Group className='mb-3' controlId='inputUrl'>
+            <Form.Group className="mb-3" controlId="inputUrl">
               <Form.Label>Image</Form.Label>
               <Form.Control
-                type='text'
-                placeholder='Image URL'
+                type="text"
+                placeholder="Image URL"
                 onChange={(e) => {
                   setImage(e.target.value);
                 }}
               />
             </Form.Group>
             {/* ベッドの数 */}
-            <Form.Group className='mb-3' controlId='inputBeds'>
+            <Form.Group className="mb-3" controlId="inputBeds">
               <Form.Label>Beds</Form.Label>
               <Form.Control
-                type='number'
+                type="number"
                 min={1}
                 onChange={(e) => {
                   setBeds(e.target.value);
                 }}
-                placeholder='Number of Beds'
+                placeholder="Number of Beds"
               />
             </Form.Group>
             {/* 部屋の説明 */}
-            <Form.Group className='mb-3' controlId='inputDescription'>
+            <Form.Group className="mb-3" controlId="inputDescription">
               <Form.Label>Description</Form.Label>
               <Form.Control
-                as='textarea'
-                placeholder='Description'
-                style={{ height: "80px" }}
+                as="textarea"
+                placeholder="Description"
+                style={{ height: '80px' }}
                 onChange={(e) => {
                   setDescription(e.target.value);
                 }}
               />
             </Form.Group>
             {/* ホテルの場所 */}
-            <Form.Group className='mb-3' controlId='inputLocation'>
+            <Form.Group className="mb-3" controlId="inputLocation">
               <Form.Label>Location</Form.Label>
               <Form.Control
-                type='text'
-                placeholder='Location'
+                type="text"
+                placeholder="Location"
                 onChange={(e) => {
                   setLocation(e.target.value);
                 }}
               />
             </Form.Group>
             {/* 一泊の価格（NEAR） */}
-            <Form.Group className='mb-3' controlId='inputPrice'>
+            <Form.Group className="mb-3" controlId="inputPrice">
               <Form.Label>Price</Form.Label>
               <Form.Control
-                type='number'
+                type="number"
                 min={0}
-                placeholder='Price'
+                placeholder="Price"
                 onChange={(e) => {
                   setPrice(e.target.value);
                 }}
@@ -103,18 +102,17 @@ const AddRoom = ({ save }) => {
           </Modal.Body>
         </Form>
         <Modal.Footer>
-          <Button variant='outline-secondary' onClick={handleClose}>
+          <Button variant="outline-secondary" onClick={handleClose}>
             Close
           </Button>
           <Button
-            variant='dark'
+            variant="dark"
             disabled={!isFormFilled()}
             onClick={() => {
               save({
                 name,
                 image,
                 beds,
-                image,
                 description,
                 location,
                 price,

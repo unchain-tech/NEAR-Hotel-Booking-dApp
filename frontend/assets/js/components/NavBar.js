@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Button from "react-bootstrap/Button";
-import Container from "react-bootstrap/Container";
-import Nav from "react-bootstrap/Nav";
-import Navbar from "react-bootstrap/Navbar";
-import NavDropdown from "react-bootstrap/NavDropdown";
+import { useEffect, useState } from 'react';
+import Button from 'react-bootstrap/Button';
+import Container from 'react-bootstrap/Container';
+import Nav from 'react-bootstrap/Nav';
+import Navbar from 'react-bootstrap/Navbar';
+import NavDropdown from 'react-bootstrap/NavDropdown';
+import { useNavigate } from 'react-router-dom';
 
-import { login, logout, accountBalance } from "../near/utils";
+import { accountBalance, login, logout } from '../near/utils';
 
 const NavBar = () => {
   const navigate = useNavigate();
-  const [balance, setBalance] = useState("0");
+  const [balance, setBalance] = useState('0');
 
   const getBalance = async () => {
     if (window.accountId) {
@@ -23,16 +23,16 @@ const NavBar = () => {
   });
 
   return (
-    <Navbar collapseOnSelect expand='lg' bg='dark' variant='dark'>
+    <Navbar collapseOnSelect expand="lg" bg="dark" variant="dark">
       <Container>
-        <Navbar.Brand href='/'>HOTEL BOOKING</Navbar.Brand>
-        <Navbar.Toggle aria-controls='responsive-navbar-nav' />
-        <Navbar.Collapse id='responsive-navbar-nav'>
-          <Nav className='me-auto'></Nav>
+        <Navbar.Brand href="/">HOTEL BOOKING</Navbar.Brand>
+        <Navbar.Toggle aria-controls="responsive-navbar-nav" />
+        <Navbar.Collapse id="responsive-navbar-nav">
+          <Nav className="me-auto"></Nav>
           <Nav>
             {/* NEAR Walletに接続されていない時 */}
             {!window.accountId && (
-              <Button onClick={login} variant='outline-light'>
+              <Button onClick={login} variant="outline-light">
                 Connect Wallet
               </Button>
             )}
@@ -42,7 +42,7 @@ const NavBar = () => {
                 {/* 残高を表示 */}
                 <NavDropdown
                   title={`${balance} NEAR`}
-                  id='collasible-nav-dropdown'
+                  id="collasible-nav-dropdown"
                 >
                   {/* NEAR testnet アカウントページへのリンク */}
                   <NavDropdown.Item
@@ -66,8 +66,8 @@ const NavBar = () => {
 
                 {/* ホテルのオーナー向けのメニューを表示 */}
                 <NavDropdown
-                  title='For hotel owners'
-                  id='collasible-nav-dropdown'
+                  title="For hotel owners"
+                  id="collasible-nav-dropdown"
                 >
                   {/* 部屋を管理するページへ遷移 */}
                   <NavDropdown.Item onClick={() => navigate(`/manage-rooms`)}>
@@ -81,7 +81,7 @@ const NavBar = () => {
                   </NavDropdown.Item>
                   <NavDropdown.Divider />
                   {/* HOMEへのリンク */}
-                  <NavDropdown.Item href='/'>Home</NavDropdown.Item>
+                  <NavDropdown.Item href="/">Home</NavDropdown.Item>
                 </NavDropdown>
               </>
             )}

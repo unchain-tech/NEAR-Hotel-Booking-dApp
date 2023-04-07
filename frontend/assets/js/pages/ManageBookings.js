@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from "react";
-import Button from "react-bootstrap/Button";
-import Table from "react-bootstrap/Table";
+import { useEffect, useState } from 'react';
+import Button from 'react-bootstrap/Button';
+import Table from 'react-bootstrap/Table';
 
 import {
-  get_booking_info_for_owner,
-  is_available,
   change_status_to_available,
   change_status_to_stay,
-} from "../near/utils";
+  get_booking_info_for_owner,
+  is_available,
+} from '../near/utils';
 
 const ManageBookings = () => {
   // 予約データを設定する
@@ -17,15 +17,15 @@ const ManageBookings = () => {
     try {
       setBookedRooms(await get_booking_info_for_owner(window.accountId));
     } catch (error) {
-      console.log("ERR_DISCONNECTED_WALLET");
+      console.log('ERR_DISCONNECTED_WALLET');
     }
   };
 
   const handleCheckIn = async (room_id, check_in_date) => {
-    let isAvailable = await is_available(room_id);
-    if (isAvailable == false) {
+    const isAvailable = await is_available(room_id);
+    if (isAvailable === false) {
       // 誰かが滞在中の部屋に対して`Check In`ボタンを押すとアラートを発生させる
-      alert("Error: Someone already stay.");
+      alert('Error: Someone already stay.');
       return;
     }
     try {
@@ -41,7 +41,7 @@ const ManageBookings = () => {
       change_status_to_available(room_id, check_in_date, guest_id).then(
         (resp) => {
           getBookedRooms();
-        }
+        },
       );
     } catch (error) {
       console.log({ error });
@@ -68,10 +68,10 @@ const ManageBookings = () => {
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th scope='col'>Room Name</th>
-            <th scope='col'>Check In</th>
-            <th scope='col'>GuestID</th>
-            <th scope='col'>Manage Status</th>
+            <th scope="col">Room Name</th>
+            <th scope="col">Check In</th>
+            <th scope="col">GuestID</th>
+            <th scope="col">Manage Status</th>
           </tr>
         </thead>
         {bookedRooms.map((_room) => (
@@ -81,10 +81,10 @@ const ManageBookings = () => {
               <td>{_room.check_in_date}</td>
               <td>{_room.guest_id}</td>
               <td>
-                {_room.status === "Available" && (
+                {_room.status === 'Available' && (
                   <Button
-                    variant='success'
-                    size='sm'
+                    variant="success"
+                    size="sm"
                     onClick={(e) =>
                       handleCheckIn(_room.room_id, _room.check_in_date, e)
                     }
@@ -92,16 +92,16 @@ const ManageBookings = () => {
                     Check In
                   </Button>
                 )}
-                {_room.status !== "Available" && (
+                {_room.status !== 'Available' && (
                   <Button
-                    variant='danger'
-                    size='sm'
+                    variant="danger"
+                    size="sm"
                     onClick={(e) =>
                       handleCheckOut(
                         _room.room_id,
                         _room.check_in_date,
                         _room.guest_id,
-                        e
+                        e,
                       )
                     }
                   >
