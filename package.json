@@ -69,7 +69,7 @@
     "test:unit": "cd contract && cargo test",
     "fmt:check": "cd contract && cargo fmt --check",
     "fmt": "cd contract && cargo fmt",
-    "clippy": "cd contract && cargo clippy",
+    "clippy": "cd contract && cargo clippy -- -D warnings",
     "fix": "cd contract && cargo fix",
     "prettier": "prettier --check --ignore-unknown --no-error-on-unmatched-pattern --ignore-path .prettierignore .",
     "prettier:fix": "prettier --write --ignore-unknown --no-error-on-unmatched-pattern --ignore-path .prettierignore .",
