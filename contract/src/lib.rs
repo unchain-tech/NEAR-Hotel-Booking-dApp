@@ -137,7 +137,7 @@ impl Contract {
         match self.rooms_per_owner.get(&owner_id) {
             // オーナーが既に別の部屋を登録済みの時
             Some(mut rooms) => {
-                rooms.push(room_id.clone());
+                rooms.push(room_id);
                 self.rooms_per_owner.insert(&owner_id, &rooms);
             }
             // オーナーが初めて部屋を登録する時
@@ -206,7 +206,9 @@ impl Contract {
         for (room_id, room) in self.rooms_by_id.iter() {
             match room.booked_info.get(&check_in_date) {
                 // 宿泊希望日に既に予約が入っていたら何もしない
-                Some(_) => continue,
+                Some(_) => {
+                    continue;
+                }
                 // 予約が入っていなかったら、部屋のデータを作成
                 None => {
                     let available_room = AvailableRoom {
@@ -238,15 +240,12 @@ impl Contract {
 
                     // UseStatusを複製
                     // `String`はCopyトレイトを持つことができないため、自分でコピーを作成する必要がある
-                    let status: UsageStatus;
-                    match room.status {
-                        UsageStatus::Available => status = UsageStatus::Available,
-                        UsageStatus::Stay { ref check_in_date } => {
-                            status = UsageStatus::Stay {
-                                check_in_date: check_in_date.clone(),
-                            }
-                        }
-                    }
+                    let status: UsageStatus = match room.status {
+                        UsageStatus::Available => UsageStatus::Available,
+                        UsageStatus::Stay { ref check_in_date } => UsageStatus::Stay {
+                            check_in_date: check_in_date.clone(),
+                        },
+                    };
 
                     let resigtered_room = ResigteredRoom {
                         name: room.name.clone(),
@@ -274,7 +273,7 @@ impl Contract {
                 for room_id in rooms.iter() {
                     let room = self.rooms_by_id.get(room_id).expect("ERR_NOT_FOUND_ROOM");
                     // 予約がなければ何もしない
-                    if room.booked_info.len() == 0 {
+                    if room.booked_info.is_empty() {
                         continue;
                     }
                     // 予約された日付ごとに予約データを作成
@@ -282,12 +281,14 @@ impl Contract {
                         // UseStatusを複製
                         let status: UsageStatus;
                         match room.status {
-                            UsageStatus::Available => status = UsageStatus::Available,
+                            UsageStatus::Available => {
+                                status = UsageStatus::Available;
+                            }
                             UsageStatus::Stay { ref check_in_date } => {
                                 if date == check_in_date.clone() {
                                     status = UsageStatus::Stay {
                                         check_in_date: check_in_date.clone(),
-                                    }
+                                    };
                                 } else {
                                     status = UsageStatus::Available;
                                 }
@@ -343,7 +344,7 @@ impl Contract {
         // 関数コール時に送付されたNEARを取得
         let deposit = env::attached_deposit();
         // 送付されたNEARと実際の宿泊料（NEAR）を比較するためにキャストをする
-        let room_price: u128 = room.price.clone().into();
+        let room_price: u128 = room.price.into();
         assert_eq!(deposit, room_price, "ERR_DEPOSIT_IS_INCORRECT");
 
         // 予約が入った日付, 宿泊者IDを登録
@@ -371,12 +372,12 @@ impl Contract {
         match self.bookings_per_guest.get_mut(&guest_id) {
             // 宿泊者が既に別の予約データを所有している時
             Some(booked_date) => {
-                booked_date.insert(check_in_date.clone(), room_id);
+                booked_date.insert(check_in_date, room_id);
             }
             // 初めて予約データを保存する時
             None => {
                 let mut new_guest_date = HashMap::new();
-                new_guest_date.insert(check_in_date.clone(), room_id);
+                new_guest_date.insert(check_in_date, room_id);
                 self.bookings_per_guest.insert(guest_id, new_guest_date);
             }
         }
@@ -406,13 +407,6 @@ mod tests {
     use super::*;
     use near_sdk::test_utils::{accounts, VMContextBuilder};
     use near_sdk::testing_env;
-
-    // NEARをyoctoNEARに変換する
-    // 1 NEAR ->  10**24 yoctoNEAR
-    fn near_to_yocto(near_amount: u128) -> U128 {
-        U128(near_amount * 10u128.pow(24))
-    }
-
     // トランザクションを実行するテスト環境を設定
     fn get_context(is_view: bool) -> VMContextBuilder {
         let mut builder = VMContextBuilder::new();
@@ -424,12 +418,10 @@ mod tests {
             .is_view(is_view);
         builder
     }
-
     #[test]
     fn add_then_get_registered_rooms() {
         let context = get_context(false);
         testing_env!(context.build());
-
         let mut contract = Contract::default();
         contract.add_room_to_owner(
             "101".to_string(),
@@ -437,7 +429,7 @@ mod tests {
             1,
             "This is 101 room".to_string(),
             "Tokyo".to_string(),
-            near_to_yocto(10),
+            U128(10),
         );
         contract.add_room_to_owner(
             "201".to_string(),
@@ -445,9 +437,8 @@ mod tests {
             1,
             "This is 201 room".to_string(),
             "Tokyo".to_string(),
-            near_to_yocto(10),
+            U128(10),
         );
-
         // add_room_to_owner関数をコールしたアカウントIDを取得
         let owner_id = env::signer_account_id();
 
@@ -477,7 +468,7 @@ mod tests {
             1,
             "This is 101 room".to_string(),
             "Tokyo".to_string(),
-            near_to_yocto(10),
+            U128(10),
         );
         contract.add_room_to_owner(
             "201".to_string(),
@@ -485,7 +476,7 @@ mod tests {
             1,
             "This is 201 room".to_string(),
             "Tokyo".to_string(),
-            near_to_yocto(10),
+            U128(10),
         );
 
         // `get_available_rooms`をコールするアカウントを設定
@@ -493,6 +484,7 @@ mod tests {
         let available_rooms = contract.get_available_rooms("2222-01-01".to_string());
         assert_eq!(available_rooms.len(), 2);
     }
+
     #[test]
     fn no_available_room() {
         let context = get_context(true);
@@ -510,8 +502,8 @@ mod tests {
         let mut context = get_context(false);
 
         // 宿泊料を支払うため、NEARを設定
-        context.account_balance(near_to_yocto(20).into());
-        context.attached_deposit(near_to_yocto(10).into());
+        context.account_balance(10);
+        context.attached_deposit(10);
 
         testing_env!(context.build());
 
@@ -523,7 +515,7 @@ mod tests {
             1,
             "This is 101 room".to_string(),
             "Tokyo".to_string(),
-            near_to_yocto(10),
+            U128(10),
         );
 
         ///////////////////

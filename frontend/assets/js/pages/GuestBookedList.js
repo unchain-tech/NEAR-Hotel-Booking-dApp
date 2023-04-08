@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { Table } from "react-bootstrap";
+import { useEffect, useState } from 'react';
+import { Table } from 'react-bootstrap';
 
-import { get_booking_info_for_guest } from "../near/utils";
+import { get_booking_info_for_guest } from '../near/utils';
 
 const GuestBookedList = () => {
   // 予約した部屋のデータを設定する
@@ -11,7 +11,7 @@ const GuestBookedList = () => {
     try {
       setGuestBookedRooms(await get_booking_info_for_guest(window.accountId));
     } catch (error) {
-      console.log("ERR_DISCONNECTED_WALLET");
+      console.log(error);
     }
   };
 
@@ -35,9 +35,9 @@ const GuestBookedList = () => {
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th scope='col'>Owner</th>
-            <th scope='col'>Room Name</th>
-            <th scope='col'>Check In</th>
+            <th scope="col">Owner</th>
+            <th scope="col">Room Name</th>
+            <th scope="col">Check In</th>
           </tr>
         </thead>
         {guestBookedRooms.map((_room) => (

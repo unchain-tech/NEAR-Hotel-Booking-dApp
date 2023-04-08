@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import Row from "react-bootstrap/Row";
+import { useEffect, useState } from 'react';
+import Row from 'react-bootstrap/Row';
+import { useParams } from 'react-router-dom';
 
-import Room from "../components/Room";
-import FormDate from "../components/FormDate";
-
-import { get_available_rooms, book_room } from "../near/utils";
+import FormDate from '../components/FormDate';
+import Room from '../components/Room';
+import { book_room, get_available_rooms } from '../near/utils';
 
 const Search = () => {
   // URLから検索する日付を取得する
@@ -35,14 +34,14 @@ const Search = () => {
     <>
       {/* 日付を入力するフォームを表示 */}
       <FormDate />
-      <div className='text-center' style={{ margin: "20px" }}>
+      <div className="text-center" style={{ margin: '20px' }}>
         <h2>{date}</h2>
         {availableRooms.length === 0 ? (
           <h3>Sorry, no rooms found.</h3>
         ) : (
           <>
             {/* NEAR Walletに接続されている時 */}
-            {(window, accountId && <h3>{availableRooms.length} found.</h3>)}
+            {window.accountId && <h3>{availableRooms.length} found.</h3>}
             {/* NEAR Walletに接続していない時 */}
             {!window.accountId && (
               <h3>
