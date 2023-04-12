@@ -81,7 +81,7 @@ const ManageBookings = () => {
               <td>{_room.check_in_date}</td>
               <td>{_room.guest_id}</td>
               <td>
-                {/*ステータスが`Available`の時*/}
+                {/* ステータスが`Available`の時 */}
                 {_room.status === 'Available' && (
                   <Button
                     variant="success"
