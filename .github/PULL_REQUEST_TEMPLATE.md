@@ -1,9 +1,8 @@
-Fix #<issue_number>
+## 変更内容
 
-## What
+## 背景
 
-<!--- Write the change begin made with this pull request --->
+## 備考
 
-## Test
-
-<!--- Write test methods --->
+<!-- 該当ページの URL -->
+<!-- 影響範囲など -->
