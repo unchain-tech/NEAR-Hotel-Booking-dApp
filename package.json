@@ -1,6 +1,7 @@
 {
   "name": "hotel-booking-dapp",
   "version": "1.0.0",
+  "packageManager": "yarn@3.7.0",
   "license": "(MIT AND Apache-2.0)",
   "devDependencies": {
     "@babel/core": "~7.18.2",
