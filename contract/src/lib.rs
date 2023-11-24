@@ -155,7 +155,7 @@ impl Contract {
         check_in_date: CheckInDate,
         guest_id: AccountId,
     ) {
-        let mut room = self
+        let room = self
             .rooms_by_id
             .get_mut(&room_id)
             .expect("ERR_NOT_FOUND_ROOM");
@@ -173,7 +173,7 @@ impl Contract {
 
     // 部屋の利用状況を`Available -> Stay` に変更する
     pub fn change_status_to_stay(&mut self, room_id: RoomId, check_in_date: CheckInDate) {
-        let mut room = self
+        let room = self
             .rooms_by_id
             .get_mut(&room_id)
             .expect("ERR_NOT_FOUND_ROOM");
